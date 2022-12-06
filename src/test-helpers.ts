@@ -9,7 +9,7 @@
  *
  */
 
-import { Compilation } from "./compilation"
+import { Compilation } from './compilation'
 
 // Necessary because `Compilation.graph` is readonly
 export const setCompilationGraph = (

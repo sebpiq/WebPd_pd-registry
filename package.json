@@ -1,5 +1,5 @@
 {
-  "name": "@webpd/pd-json-to-dsp-graph",
+  "name": "@webpd/pd-to-dsp-graph",
   "version": "0.1.0",
   "description": "Compiles a DSP graph from PdJson objects",
   "main": "./dist/index.js",
@@ -14,14 +14,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sebpiq/WebPd_pd-json-to-dsp-graph.git"
+    "url": "git+https://github.com/sebpiq/WebPd_pd-to-dsp-graph.git"
   },
   "author": "Sébastien Piquemal",
   "license": "BSD-2-Clause",
   "bugs": {
-    "url": "https://github.com/sebpiq/WebPd_pd-json-to-dsp-graph/issues"
+    "url": "https://github.com/sebpiq/WebPd_pd-to-dsp-graph/issues"
   },
-  "homepage": "https://github.com/sebpiq/WebPd_pd-json-to-dsp-graph#readme",
+  "homepage": "https://github.com/sebpiq/WebPd_pd-to-dsp-graph#readme",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^22.0.0",
     "@rollup/plugin-node-resolve": "^13.3.0",

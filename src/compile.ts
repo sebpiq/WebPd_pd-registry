@@ -234,7 +234,10 @@ export const _inlineSubpatchInlets = (
                     graph,
                     compilation.buildGraphNodeId(outerPatchId, subpatchPdNodeId)
                 )
-                const sources = getters.getSources(subpatchNode, subpatchNodeInlet)
+                const sources = getters.getSources(
+                    subpatchNode,
+                    subpatchNodeInlet
+                )
                 sinks.forEach((sink) =>
                     sources.forEach((source) =>
                         mutation.connect(graph, source, sink)
