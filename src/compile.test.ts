@@ -30,7 +30,7 @@ import {
 import { getReferencesToSubpatch } from './pdjson-helpers'
 import { Compilation } from './compilation'
 import NODE_BUILDERS from './node-builders'
-import { PdDspGraph } from '@webpd/dsp-graph'
+import { DspGraph } from '@webpd/dsp-graph'
 import { makeNodeBuilders } from './test-helpers'
 import { NodeBuilders } from './types'
 
@@ -54,13 +54,13 @@ describe('compile', () => {
                     type: 'message',
                     id: '0',
                 },
-            } as PdDspGraph.PortletMap,
+            } as DspGraph.PortletMap,
             outlets: {
                 '0': {
                     type: 'message',
                     id: '0',
                 },
-            } as PdDspGraph.PortletMap,
+            } as DspGraph.PortletMap,
         }
 
         it('should compile the graph', () => {
@@ -97,7 +97,7 @@ describe('compile', () => {
             })
             const graph = compile(pd, NODE_BUILDERS)
 
-            const expectedGraph: PdDspGraph.Graph = makeGraph({
+            const expectedGraph: DspGraph.Graph = makeGraph({
                 pd_p_n1: {
                     ...EXPECTED_INLETS_OUTLETS,
                     sinks: { '0': [['pd_sp_n1', '0']] },
@@ -367,7 +367,7 @@ describe('compile', () => {
                     type: 'message',
                     id: '3',
                 },
-            } as PdDspGraph.PortletMap,
+            } as DspGraph.PortletMap,
             outlets: {
                 '0': {
                     type: 'message',
@@ -385,7 +385,7 @@ describe('compile', () => {
                     type: 'message',
                     id: '3',
                 },
-            } as PdDspGraph.PortletMap,
+            } as DspGraph.PortletMap,
         }
 
         describe('_inlineSubpatchInlets', () => {
@@ -603,7 +603,7 @@ describe('compile', () => {
                 buildGraph(compilation)
                 _inlineSubpatch(compilation, pd.patches['sp'])
 
-                const expectedGraph: PdDspGraph.Graph = makeGraph({
+                const expectedGraph: DspGraph.Graph = makeGraph({
                     pd_p_n1: {
                         ...EXPECTED_INLETS_OUTLETS,
                         sinks: { 2: [['pd_sp_n1', '1']] },
@@ -654,7 +654,7 @@ describe('compile', () => {
                 buildGraph(compilation)
                 _inlineSubpatch(compilation, pd.patches['sp'])
 
-                const expectedGraph: PdDspGraph.Graph = makeGraph({
+                const expectedGraph: DspGraph.Graph = makeGraph({
                     pd_p_n1: {
                         ...EXPECTED_INLETS_OUTLETS,
                         sinks: { 1: [['pd_p_n2', '1']] },
@@ -721,7 +721,7 @@ describe('compile', () => {
             buildGraph(compilation)
             flattenGraph(compilation)
 
-            const expectedGraph: PdDspGraph.Graph = makeGraph({
+            const expectedGraph: DspGraph.Graph = makeGraph({
                 pd_p_n1: {
                     ...EXPECTED_INLETS_OUTLETS,
                     sinks: { 1: [['pd_ssp_n1', '1']] },
@@ -801,7 +801,7 @@ describe('compile', () => {
             buildGraph(compilation)
             flattenGraph(compilation)
 
-            const expectedGraph: PdDspGraph.Graph = makeGraph({
+            const expectedGraph: DspGraph.Graph = makeGraph({
                 pd_p_n1: {
                     ...EXPECTED_INLETS_OUTLETS,
                     sinks: {

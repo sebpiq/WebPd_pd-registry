@@ -9,7 +9,7 @@
  *
  */
 
-import { PdDspGraph } from '@webpd/dsp-graph'
+import { DspGraph } from '@webpd/dsp-graph'
 import { NodeBuilders } from './types'
 
 enum IdNamespaces {
@@ -19,7 +19,7 @@ enum IdNamespaces {
 
 export class Compilation {
     readonly pd: PdJson.Pd
-    readonly graph: PdDspGraph.Graph
+    readonly graph: DspGraph.Graph
     readonly nodeBuilders: NodeBuilders
 
     constructor(pd: PdJson.Pd, nodeBuilders: NodeBuilders) {
@@ -37,11 +37,8 @@ export class Compilation {
     }
 
     fixConnection(
-        connection: [
-            PdDspGraph.ConnectionEndpoint,
-            PdDspGraph.ConnectionEndpoint
-        ]
-    ): [PdDspGraph.ConnectionEndpoint, PdDspGraph.ConnectionEndpoint] {
+        connection: [DspGraph.ConnectionEndpoint, DspGraph.ConnectionEndpoint]
+    ): [DspGraph.ConnectionEndpoint, DspGraph.ConnectionEndpoint] {
         const [source, sink] = connection
         const sinkNode = this.graph[sink.nodeId]
         const pdSinkNodeBuilder = this.getNodeBuilder(sinkNode.type)
@@ -61,14 +58,14 @@ export class Compilation {
     buildGraphNodeId(
         patchId: PdJson.ObjectGlobalId,
         nodeId: PdJson.ObjectLocalId
-    ): PdDspGraph.NodeId {
+    ): DspGraph.NodeId {
         return `${IdNamespaces.PD}_${patchId}_${nodeId}`
     }
 
     buildMixerNodeId(
-        sinkId: PdDspGraph.NodeId,
-        inletId: PdDspGraph.PortletId
-    ): PdDspGraph.NodeId {
+        sinkId: DspGraph.NodeId,
+        inletId: DspGraph.PortletId
+    ): DspGraph.NodeId {
         return `${IdNamespaces.MIXER}_${sinkId}_${inletId}`
     }
 }

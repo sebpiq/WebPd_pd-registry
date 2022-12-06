@@ -9,14 +9,14 @@
  *
  */
 
-import { PdDspGraph } from '@webpd/dsp-graph'
+import { DspGraph } from '@webpd/dsp-graph'
 import { Compilation } from './compilation'
 import { NodeBuilder, NodeBuilders } from './types'
 
 type ConciseNodeBuilders = {
     [nodeType: string]: {
-        inletTypes?: Array<PdDspGraph.PortletType>
-        outletTypes?: Array<PdDspGraph.PortletType>
+        inletTypes?: Array<DspGraph.PortletType>
+        outletTypes?: Array<DspGraph.PortletType>
         isEndSink?: boolean
         translateArgs?: NodeBuilder['translateArgs']
         rerouteConnectionIn?: NodeBuilder['rerouteConnectionIn']
@@ -27,7 +27,7 @@ type ConciseNodeBuilders = {
 // Necessary because `Compilation.graph` is readonly
 export const setCompilationGraph = (
     compilation: Compilation,
-    graph: PdDspGraph.Graph
+    graph: DspGraph.Graph
 ) => {
     Object.keys(compilation.graph).forEach(
         (key) => delete compilation.graph[key]
@@ -42,11 +42,11 @@ export const makeNodeBuilders = (
     Object.entries(conciseNodeBuilders).forEach(([nodeType, entryParams]) => {
         let build: NodeBuilder['build']
         if (!entryParams.build) {
-            const defaultPortletsTemplate: Array<PdDspGraph.PortletType> = [
+            const defaultPortletsTemplate: Array<DspGraph.PortletType> = [
                 'message',
             ]
 
-            const inletsTemplate: PdDspGraph.PortletMap = {}
+            const inletsTemplate: DspGraph.PortletMap = {}
             ;(entryParams.inletTypes || defaultPortletsTemplate).map(
                 (inletType, i) => {
                     inletsTemplate[`${i}`] = {
@@ -56,7 +56,7 @@ export const makeNodeBuilders = (
                 }
             )
 
-            const outletsTemplate: PdDspGraph.PortletMap = {}
+            const outletsTemplate: DspGraph.PortletMap = {}
             ;(entryParams.outletTypes || defaultPortletsTemplate).map(
                 (outletType, i) => {
                     outletsTemplate[`${i}`] = {
@@ -67,7 +67,7 @@ export const makeNodeBuilders = (
             )
 
             build = () => {
-                let extraArgs: Partial<PdDspGraph.Node> = {}
+                let extraArgs: Partial<DspGraph.Node> = {}
                 if (entryParams.isEndSink) {
                     extraArgs = { isEndSink: entryParams.isEndSink }
                 }

@@ -14,7 +14,7 @@ import { Compilation } from './compilation'
 import { makeGraph } from '@webpd/dsp-graph/src/test-helpers'
 import { pdJsonDefaults } from '@webpd/shared/test-helpers'
 import { makeNodeBuilders, setCompilationGraph } from './test-helpers'
-import { PdDspGraph } from '@webpd/dsp-graph'
+import { DspGraph } from '@webpd/dsp-graph'
 
 describe('compilation', () => {
     let compilation: Compilation
@@ -26,8 +26,8 @@ describe('compilation', () => {
         const NODE_BUILDERS = makeNodeBuilders({
             someType: {
                 rerouteConnectionIn: (
-                    outlet: PdDspGraph.Portlet,
-                    inletId: PdDspGraph.PortletId
+                    outlet: DspGraph.Portlet,
+                    inletId: DspGraph.PortletId
                 ) => {
                     if (inletId !== '0') {
                         return undefined

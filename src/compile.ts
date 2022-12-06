@@ -9,7 +9,7 @@
  *
  */
 
-import { mutation, getters, helpers, PdDspGraph } from '@webpd/dsp-graph'
+import { mutation, getters, helpers, DspGraph } from '@webpd/dsp-graph'
 import { getReferencesToSubpatch, ReferencesToSubpatch } from './pdjson-helpers'
 import partition from 'lodash.partition'
 import { Compilation } from './compilation'
@@ -19,7 +19,7 @@ import { NodeBuilders } from './types'
 export default (
     pd: PdJson.Pd,
     nodeBuilders: NodeBuilders = NODE_BUILDERS
-): PdDspGraph.Graph => {
+): DspGraph.Graph => {
     const compilation = new Compilation(pd, nodeBuilders)
     buildGraph(compilation)
     flattenGraph(compilation)
@@ -50,8 +50,8 @@ export const buildGraph = (compilation: Compilation): void => {
                 patchConnection.sink.nodeId
             )
             const connection: [
-                PdDspGraph.ConnectionEndpoint,
-                PdDspGraph.ConnectionEndpoint
+                DspGraph.ConnectionEndpoint,
+                DspGraph.ConnectionEndpoint
             ] = [
                 {
                     nodeId: sourceNodeId,
@@ -91,8 +91,8 @@ const _buildGraphNode = (
     compilation: Compilation,
     patch: PdJson.Patch,
     pdNode: PdJson.Node,
-    nodeId: PdDspGraph.NodeId
-): PdDspGraph.Node => {
+    nodeId: DspGraph.NodeId
+): DspGraph.Node => {
     const graphNodeType = pdNode.type
     const nodeBuilder = compilation.getNodeBuilder(pdNode.type)
     const graphNodeArgs = nodeBuilder.translateArgs(pdNode.args, patch)
@@ -110,8 +110,8 @@ const _buildGraphNode = (
 const _buildGraphConnections = (
     compilation: Compilation,
     patch: PdJson.Patch,
-    sources: Array<PdDspGraph.ConnectionEndpoint>,
-    sink: PdDspGraph.ConnectionEndpoint
+    sources: Array<DspGraph.ConnectionEndpoint>,
+    sink: DspGraph.ConnectionEndpoint
 ): void => {
     const { graph } = compilation
     if (sources.length === 1) {
@@ -120,8 +120,8 @@ const _buildGraphConnections = (
     }
 
     // Create Mixer node according to sink type
-    let mixerNode: PdDspGraph.Node
-    const sinkNode: PdDspGraph.Node = compilation.graph[sink.nodeId]
+    let mixerNode: DspGraph.Node
+    const sinkNode: DspGraph.Node = compilation.graph[sink.nodeId]
     const sinkType = sinkNode.inlets[sink.portletId].type
 
     // Pd implicitely sums multiple signals when they are connected to the same inlet.

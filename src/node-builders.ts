@@ -9,7 +9,7 @@
  *
  */
 
-import { PdDspGraph } from '@webpd/dsp-graph'
+import { DspGraph } from '@webpd/dsp-graph'
 import { resolveDollarArg } from './pdjson-helpers'
 import { NodeBuilder, NodeBuilders } from './types'
 
@@ -29,9 +29,9 @@ const tildeBinaryOperatorBuilder: NodeBuilder = {
         },
     }),
     rerouteConnectionIn: (
-        outlet: PdDspGraph.Portlet,
-        inletId: PdDspGraph.PortletId
-    ): PdDspGraph.PortletId => {
+        outlet: DspGraph.Portlet,
+        inletId: DspGraph.PortletId
+    ): DspGraph.PortletId => {
         if (inletId === '1') {
             return outlet.type === 'message' ? '1_message' : '1_signal'
         }
@@ -55,9 +55,9 @@ const NODE_BUILDERS: NodeBuilders = {
             },
         }),
         rerouteConnectionIn: (
-            outlet: PdDspGraph.Portlet,
-            inletId: PdDspGraph.PortletId
-        ): PdDspGraph.PortletId => {
+            outlet: DspGraph.Portlet,
+            inletId: DspGraph.PortletId
+        ): DspGraph.PortletId => {
             if (inletId === '0') {
                 return outlet.type === 'message' ? '0_message' : '0_signal'
             }
@@ -84,8 +84,8 @@ const NODE_BUILDERS: NodeBuilders = {
         translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
             channels: objectArgs[0],
         }),
-        build: (nodeArgs: PdDspGraph.NodeArguments) => {
-            const inlets: PdDspGraph.PortletMap = {}
+        build: (nodeArgs: DspGraph.NodeArguments) => {
+            const inlets: DspGraph.PortletMap = {}
             for (let ch = 0; ch < nodeArgs.channels; ch++) {
                 const inletId = ch.toString(10)
                 inlets[inletId] = { type: 'signal', id: inletId }
