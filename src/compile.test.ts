@@ -17,18 +17,22 @@ import compile, {
     _inlineSubpatchOutlets,
     _inlineSubpatch,
 } from './compile'
-import { assertGraphsEqual } from '@webpd/dsp-graph/src/test-helpers'
+import {
+    assertGraphsEqual,
+    makeGraph,
+    nodeDefaults,
+} from '@webpd/dsp-graph/src/test-helpers'
 import {
     pdJsonPatchDefaults,
     pdJsonNodeDefaults,
     makePd,
-    makeGraph,
-    nodeDefaults,
-    makeNodeBuilders,
 } from '@webpd/shared/test-helpers'
 import { getReferencesToSubpatch } from './pdjson-helpers'
 import { Compilation } from './compilation'
 import NODE_BUILDERS from './node-builders'
+import { PdDspGraph } from '@webpd/dsp-graph'
+import { makeNodeBuilders } from './test-helpers'
+import { NodeBuilders } from './types'
 
 const DUMMY_NODE_BUILDERS = makeNodeBuilders({
     [pdJsonNodeDefaults('').type]: {},
@@ -37,7 +41,7 @@ const DUMMY_NODE_TYPE = pdJsonNodeDefaults('').type
 
 describe('compile', () => {
     describe('default', () => {
-        const NODE_BUILDERS: PdDspGraph.NodeBuilders = makeNodeBuilders({
+        const NODE_BUILDERS: NodeBuilders = makeNodeBuilders({
             [DUMMY_NODE_TYPE]: {
                 inletTypes: ['message'],
                 outletTypes: ['message'],
@@ -236,7 +240,7 @@ describe('compile', () => {
                     },
                 },
             })
-            const nodeBuilders: PdDspGraph.NodeBuilders = makeNodeBuilders({
+            const nodeBuilders: NodeBuilders = makeNodeBuilders({
                 signalType: {
                     inletTypes: ['signal'],
                     outletTypes: ['signal', 'signal'],
@@ -338,7 +342,7 @@ describe('compile', () => {
     })
 
     describe('flattenGraph', () => {
-        const NODE_BUILDERS: PdDspGraph.NodeBuilders = makeNodeBuilders({
+        const NODE_BUILDERS: NodeBuilders = makeNodeBuilders({
             [DUMMY_NODE_TYPE]: {
                 inletTypes: ['message', 'message', 'message', 'message'],
                 outletTypes: ['message', 'message', 'message', 'message'],

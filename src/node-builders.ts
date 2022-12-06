@@ -9,10 +9,12 @@
  *
  */
 
+import { PdDspGraph } from '@webpd/dsp-graph'
 import { resolveDollarArg } from './pdjson-helpers'
+import { NodeBuilder, NodeBuilders } from './types'
 
 // Same builder for [+~], [*~], etc ...
-const tildeBinaryOperatorBuilder: PdDspGraph.NodeBuilder = {
+const tildeBinaryOperatorBuilder: NodeBuilder = {
     translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
         value: objectArgs[0],
     }),
@@ -37,7 +39,7 @@ const tildeBinaryOperatorBuilder: PdDspGraph.NodeBuilder = {
     },
 }
 
-const NODE_BUILDERS: PdDspGraph.NodeBuilders = {
+const NODE_BUILDERS: NodeBuilders = {
     'osc~': {
         translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
             frequency: objectArgs[0],

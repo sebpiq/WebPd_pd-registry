@@ -9,6 +9,9 @@
  *
  */
 
+import { PdDspGraph } from '@webpd/dsp-graph'
+import { NodeBuilders } from './types'
+
 enum IdNamespaces {
     PD = 'pd',
     MIXER = 'mixer',
@@ -17,9 +20,9 @@ enum IdNamespaces {
 export class Compilation {
     readonly pd: PdJson.Pd
     readonly graph: PdDspGraph.Graph
-    readonly nodeBuilders: PdDspGraph.NodeBuilders
+    readonly nodeBuilders: NodeBuilders
 
-    constructor(pd: PdJson.Pd, nodeBuilders: PdDspGraph.NodeBuilders) {
+    constructor(pd: PdJson.Pd, nodeBuilders: NodeBuilders) {
         this.pd = pd
         this.nodeBuilders = nodeBuilders
         this.graph = {}

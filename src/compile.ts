@@ -9,15 +9,16 @@
  *
  */
 
-import { mutation, getters, helpers } from '@webpd/dsp-graph'
+import { mutation, getters, helpers, PdDspGraph } from '@webpd/dsp-graph'
 import { getReferencesToSubpatch, ReferencesToSubpatch } from './pdjson-helpers'
 import partition from 'lodash.partition'
 import { Compilation } from './compilation'
 import NODE_BUILDERS from './node-builders'
+import { NodeBuilders } from './types'
 
 export default (
     pd: PdJson.Pd,
-    nodeBuilders: PdDspGraph.NodeBuilders = NODE_BUILDERS
+    nodeBuilders: NodeBuilders = NODE_BUILDERS
 ): PdDspGraph.Graph => {
     const compilation = new Compilation(pd, nodeBuilders)
     buildGraph(compilation)

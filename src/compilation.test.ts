@@ -11,12 +11,10 @@
 
 import assert from 'assert'
 import { Compilation } from './compilation'
-import {
-    pdJsonDefaults,
-    makeNodeBuilders,
-    makeGraph,
-} from '@webpd/shared/test-helpers'
-import { setCompilationGraph } from './test-helpers'
+import { makeGraph } from '@webpd/dsp-graph/src/test-helpers'
+import { pdJsonDefaults } from '@webpd/shared/test-helpers'
+import { makeNodeBuilders, setCompilationGraph } from './test-helpers'
+import { PdDspGraph } from '@webpd/dsp-graph'
 
 describe('compilation', () => {
     let compilation: Compilation
