@@ -1,0 +1,42 @@
+{
+  "name": "@webpd/pd-json-to-dsp-graph",
+  "version": "0.1.0",
+  "description": "Compiles a DSP graph from PdJson objects",
+  "main": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' npx jest --config node_modules/@webpd/shared/configs/jest.js",
+    "rollup": "npx rollup --config node_modules/@webpd/shared/configs/rollup.mjs",
+    "prettier": "npm explore @webpd/shared -- npm run prettier $(pwd)/src",
+    "eslint": "npm explore @webpd/shared -- npm run eslint $(pwd)/src",
+    "all": "npm run test-bail && npm run prettier && npm run eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sebpiq/WebPd_pd-json-to-dsp-graph.git"
+  },
+  "author": "Sébastien Piquemal",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/sebpiq/WebPd_pd-json-to-dsp-graph/issues"
+  },
+  "homepage": "https://github.com/sebpiq/WebPd_pd-json-to-dsp-graph#readme",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^22.0.0",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "@rollup/plugin-typescript": "^8.3.2",
+    "@types/jest": "^27.5.1",
+    "@types/lodash.partition": "^4.6.6",
+    "@types/node": "^14.0.13",
+    "@webpd/shared": "file:../WebPd_shared",
+    "jest": "^28.1.0",
+    "rollup": "^2.74.1",
+    "rollup-plugin-dts": "^4.2.1",
+    "ts-jest": "^28.0.3"
+  },
+  "dependencies": {
+    "@webpd/dsp-graph": "file:../WebPd_dsp-graph",
+    "lodash.partition": "^4.6.0"
+  }
+}
