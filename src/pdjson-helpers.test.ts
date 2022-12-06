@@ -16,7 +16,8 @@ import {
     pdJsonNodeDefaults,
     makePd,
     pdJsonDefaults,
-} from '@webpd/shared/test-helpers'
+} from '@webpd/pd-json/src/test-helpers'
+import { PdJson } from '@webpd/pd-json/src/types'
 
 describe('pdjson-helpers', () => {
     describe('getReferencesToSubpatch', () => {

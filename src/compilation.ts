@@ -10,6 +10,7 @@
  */
 
 import { DspGraph } from '@webpd/dsp-graph'
+import { PdJson } from '@webpd/pd-json/src/types'
 import { NodeBuilders } from './types'
 
 enum IdNamespaces {
@@ -28,7 +29,7 @@ export class Compilation {
         this.graph = {}
     }
 
-    getNodeBuilder(type: PdSharedTypes.NodeType) {
+    getNodeBuilder(type: PdJson.ObjectType) {
         const nodeBuilder = this.nodeBuilders[type]
         if (!nodeBuilder) {
             throw new Error(`unknown node type ${type}`)

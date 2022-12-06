@@ -1,4 +1,5 @@
 import { DspGraph } from '@webpd/dsp-graph'
+import { PdJson } from '@webpd/pd-json/src/types'
 
 // Patch translation PdJson -> DspGraph
 interface PartialNode {
@@ -24,5 +25,5 @@ export interface NodeBuilder {
 }
 
 export interface NodeBuilders {
-    [nodeType: string]: NodeBuilder
+    [nodeType: PdJson.ObjectType]: NodeBuilder
 }

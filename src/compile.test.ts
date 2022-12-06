@@ -26,13 +26,14 @@ import {
     pdJsonPatchDefaults,
     pdJsonNodeDefaults,
     makePd,
-} from '@webpd/shared/test-helpers'
+} from '@webpd/pd-json/src/test-helpers'
 import { getReferencesToSubpatch } from './pdjson-helpers'
 import { Compilation } from './compilation'
 import NODE_BUILDERS from './node-builders'
 import { DspGraph } from '@webpd/dsp-graph'
 import { makeNodeBuilders } from './test-helpers'
 import { NodeBuilders } from './types'
+import { PdJson } from '@webpd/pd-json/src/types'
 
 const DUMMY_NODE_BUILDERS = makeNodeBuilders({
     [pdJsonNodeDefaults('').type]: {},

@@ -9,6 +9,8 @@
  *
  */
 
+import { PdJson } from '@webpd/pd-json/src/types'
+
 // Regular expressions to deal with dollar-args
 const DOLLAR_VAR_REGEXP_GLOB = /\$(\d+)/g
 

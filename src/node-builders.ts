@@ -10,6 +10,7 @@
  */
 
 import { DspGraph } from '@webpd/dsp-graph'
+import { PdJson } from '@webpd/pd-json/src/types'
 import { resolveDollarArg } from './pdjson-helpers'
 import { NodeBuilder, NodeBuilders } from './types'
 

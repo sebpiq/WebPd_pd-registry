@@ -15,6 +15,7 @@ import partition from 'lodash.partition'
 import { Compilation } from './compilation'
 import NODE_BUILDERS from './node-builders'
 import { NodeBuilders } from './types'
+import { PdJson } from '@webpd/pd-json/src/types'
 
 export default (
     pd: PdJson.Pd,

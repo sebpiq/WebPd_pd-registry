@@ -29,6 +29,7 @@
     "@types/jest": "^27.5.1",
     "@types/lodash.partition": "^4.6.6",
     "@types/node": "^14.0.13",
+    "@webpd/pd-json": "file:../WebPd_pd-json",
     "@webpd/shared": "file:../WebPd_shared",
     "jest": "^28.1.0",
     "rollup": "^2.74.1",

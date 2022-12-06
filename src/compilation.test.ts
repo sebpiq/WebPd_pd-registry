@@ -12,7 +12,7 @@
 import assert from 'assert'
 import { Compilation } from './compilation'
 import { makeGraph } from '@webpd/dsp-graph/src/test-helpers'
-import { pdJsonDefaults } from '@webpd/shared/test-helpers'
+import { pdJsonDefaults } from '@webpd/pd-json/src/test-helpers'
 import { makeNodeBuilders, setCompilationGraph } from './test-helpers'
 import { DspGraph } from '@webpd/dsp-graph'
 
