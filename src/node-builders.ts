@@ -10,24 +10,15 @@
  */
 
 import { DspGraph } from '@webpd/dsp-graph'
-import { PdJson } from '@webpd/pd-json/src/types'
-import { resolveDollarArg } from './pdjson-helpers'
-import { NodeBuilder, NodeBuilders } from './types'
-import { assertNumber } from './validation'
-
-export interface OscTildeArgs { frequency: number }
-export interface BinaryOperatorTildeArgs { value: number }
-export interface DacTildeArgs { channels: Array<number> }
-export interface MixerTildeArgs { channels: number }
-export interface TabplayTildeArgs { arrayName: string }
-export interface MsgArgs { template: Array<string | number> }
-export interface MetroArgs { rate: number }
-export interface NoArgs {}
+import { NodeBuilder, PdJson, pdJsonHelpers, validation } from '@webpd/pd-json'
+import NODE_ARGUMENTS_TYPES from './node-arguments-types'
 
 // Same builder for [+~], [*~], etc ...
-const binaryOperatortildeBuilder: NodeBuilder<BinaryOperatorTildeArgs> = {
+const binaryOperatortildeBuilder: NodeBuilder<
+    NODE_ARGUMENTS_TYPES['_BINOP_TILDE']
+> = {
     translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
-        value: assertNumber(objectArgs[0]),
+        value: validation.assertNumber(objectArgs[0]),
     }),
     build: () => ({
         inlets: {
@@ -50,9 +41,9 @@ const binaryOperatortildeBuilder: NodeBuilder<BinaryOperatorTildeArgs> = {
     },
 }
 
-const oscTildeBuilder: NodeBuilder<OscTildeArgs> = {
+const oscTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['osc~']> = {
     translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
-        frequency: assertNumber(objectArgs[0]),
+        frequency: validation.assertNumber(objectArgs[0]),
     }),
     build: () => ({
         inlets: {
@@ -75,7 +66,7 @@ const oscTildeBuilder: NodeBuilder<OscTildeArgs> = {
     },
 }
 
-const noiseTildeBuilder: NodeBuilder<NoArgs> = {
+const noiseTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['_NO_ARGS']> = {
     translateArgs: () => ({}),
     build: () => {
         return {
@@ -87,9 +78,9 @@ const noiseTildeBuilder: NodeBuilder<NoArgs> = {
     },
 }
 
-const mixerTildeBuilder: NodeBuilder<MixerTildeArgs> = {
+const mixerTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['mixer~']> = {
     translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
-        channels: assertNumber(objectArgs[0]),
+        channels: validation.assertNumber(objectArgs[0]),
     }),
     build: (nodeArgs: DspGraph.NodeArguments) => {
         const inlets: DspGraph.PortletMap = {}
@@ -106,12 +97,12 @@ const mixerTildeBuilder: NodeBuilder<MixerTildeArgs> = {
     },
 }
 
-const tabplayTildeBuilder: NodeBuilder<TabplayTildeArgs> = {
-    translateArgs: (
-        objectArgs: PdJson.ObjectArgs,
-        patch: PdJson.Patch
-    ) => ({
-        arrayName: resolveDollarArg(objectArgs[0].toString(), patch),
+const tabplayTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['tabplay~']> = {
+    translateArgs: (objectArgs: PdJson.ObjectArgs, patch: PdJson.Patch) => ({
+        arrayName: pdJsonHelpers.resolveDollarArg(
+            objectArgs[0].toString(),
+            patch
+        ),
     }),
     build: () => ({
         inlets: {
@@ -124,17 +115,18 @@ const tabplayTildeBuilder: NodeBuilder<TabplayTildeArgs> = {
     }),
 }
 
-const dacTildeBuilder: NodeBuilder<DacTildeArgs> = {
+const dacTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['dac~']> = {
     translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
         // Channels are provided as 1-indexed, so we translate them back to 0-indexed.
-        channels: (objectArgs)
-            .map(channel => assertNumber(channel) - 1),
+        channels: objectArgs.map(
+            (channel) => validation.assertNumber(channel) - 1
+        ),
     }),
     build: (nodeArgs: DspGraph.NodeArguments) => ({
         inlets: (nodeArgs.channels as Array<number>).reduce((inlets, _, i) => {
             return {
                 ...inlets,
-                [i]: { type: 'signal', id: i }
+                [i]: { type: 'signal', id: i },
             }
         }, {} as DspGraph.PortletMap),
         outlets: {},
@@ -142,7 +134,7 @@ const dacTildeBuilder: NodeBuilder<DacTildeArgs> = {
     }),
 }
 
-const msgBuilder: NodeBuilder<MsgArgs> = {
+const msgBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['msg']> = {
     translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
         template: objectArgs,
     }),
@@ -156,9 +148,9 @@ const msgBuilder: NodeBuilder<MsgArgs> = {
     }),
 }
 
-const metroBuilder: NodeBuilder<MetroArgs> = {
+const metroBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['metro']> = {
     translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
-        rate: assertNumber(objectArgs[0]),
+        rate: validation.assertNumber(objectArgs[0]),
     }),
     build: () => ({
         inlets: {
@@ -171,7 +163,7 @@ const metroBuilder: NodeBuilder<MetroArgs> = {
     }),
 }
 
-const loadbangBuilder: NodeBuilder<NoArgs> = {
+const loadbangBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['_NO_ARGS']> = {
     translateArgs: () => ({}),
     build: () => ({
         inlets: {},
@@ -181,7 +173,7 @@ const loadbangBuilder: NodeBuilder<NoArgs> = {
     }),
 }
 
-const NODE_BUILDERS: NodeBuilders = {
+const NODE_BUILDERS = {
     'osc~': oscTildeBuilder,
     '+~': binaryOperatortildeBuilder,
     '*~': binaryOperatortildeBuilder,
