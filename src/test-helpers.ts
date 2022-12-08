@@ -18,9 +18,9 @@ type ConciseNodeBuilders = {
         inletTypes?: Array<DspGraph.PortletType>
         outletTypes?: Array<DspGraph.PortletType>
         isEndSink?: boolean
-        translateArgs?: NodeBuilder['translateArgs']
-        rerouteConnectionIn?: NodeBuilder['rerouteConnectionIn']
-        build?: NodeBuilder['build']
+        translateArgs?: NodeBuilder<any>['translateArgs']
+        rerouteConnectionIn?: NodeBuilder<any>['rerouteConnectionIn']
+        build?: NodeBuilder<any>['build']
     }
 }
 
@@ -40,7 +40,7 @@ export const makeNodeBuilders = (
 ): NodeBuilders => {
     const nodeBuilders: NodeBuilders = {}
     Object.entries(conciseNodeBuilders).forEach(([nodeType, entryParams]) => {
-        let build: NodeBuilder['build']
+        let build: NodeBuilder<any>['build']
         if (!entryParams.build) {
             const defaultPortletsTemplate: Array<DspGraph.PortletType> = [
                 'message',

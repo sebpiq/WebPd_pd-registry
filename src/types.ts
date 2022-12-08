@@ -8,11 +8,11 @@ interface PartialNode {
     isEndSink?: DspGraph.Node['isEndSink']
 }
 
-export interface NodeBuilder {
+export interface NodeBuilder<NodeArgsType> {
     translateArgs: (
         objectArgs: PdJson.ObjectArgs,
         patch: PdJson.Patch
-    ) => DspGraph.NodeArguments
+    ) => NodeArgsType
     build: (nodeArgs: DspGraph.NodeArguments) => PartialNode
 
     // Hook that allows to re-route a connection from the node to a different inlet.
@@ -25,5 +25,5 @@ export interface NodeBuilder {
 }
 
 export interface NodeBuilders {
-    [nodeType: PdJson.ObjectType]: NodeBuilder
+    [nodeType: PdJson.ObjectType]: NodeBuilder<any>
 }
