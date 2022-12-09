@@ -25,12 +25,14 @@ type BinopTildeNodeImplementation = NodeImplementation<
 >
 
 // ------------------------------ declare ------------------------------ //
-export const makeDeclare = (): BinopTildeCodeGenerator => (...args) => {
-    const [node] = args
-    return _hasSignalInput(node)
-        ? declareSignal(...args)
-        : declareMessage(...args)
-}
+export const makeDeclare =
+    (): BinopTildeCodeGenerator =>
+    (...args) => {
+        const [node] = args
+        return _hasSignalInput(node)
+            ? declareSignal(...args)
+            : declareMessage(...args)
+    }
 
 const declareSignal: BinopTildeCodeGenerator = () => ``
 
@@ -38,28 +40,28 @@ const declareMessage: BinopTildeCodeGenerator = (_, { state, macros }) =>
     `let ${macros.typedVarFloat(state.rightOp)}`
 
 // ------------------------------ initialize ------------------------------ //
-export const makeInitialize = (
-    defaultValue: number
-): BinopTildeCodeGenerator => (...args) => {
-    const [node] = args
-    const initializeSignal = makeInitializeSignal(defaultValue)
-    const initializeMessage = makeInitializeMessage(defaultValue)
-    return _hasSignalInput(node)
-        ? initializeSignal(...args)
-        : initializeMessage(...args)
-}
+export const makeInitialize =
+    (defaultValue: number): BinopTildeCodeGenerator =>
+    (...args) => {
+        const [node] = args
+        const initializeSignal = makeInitializeSignal(defaultValue)
+        const initializeMessage = makeInitializeMessage(defaultValue)
+        return _hasSignalInput(node)
+            ? initializeSignal(...args)
+            : initializeMessage(...args)
+    }
 
-const makeInitializeSignal = (
-    defaultValue: number
-): BinopTildeCodeGenerator => (node, { ins }) =>
-    `${ins.$1_signal} = ${node.args.value || defaultValue}`
+const makeInitializeSignal =
+    (defaultValue: number): BinopTildeCodeGenerator =>
+    (node, { ins }) =>
+        `${ins.$1_signal} = ${node.args.value || defaultValue}`
 
-const makeInitializeMessage = (
-    defaultValue: number
-): BinopTildeCodeGenerator => (node, { state }) =>
-    `${state.rightOp} = ${
-        node.args.value ? node.args.value.toString(10) : defaultValue
-    }`
+const makeInitializeMessage =
+    (defaultValue: number): BinopTildeCodeGenerator =>
+    (node, { state }) =>
+        `${state.rightOp} = ${
+            node.args.value ? node.args.value.toString(10) : defaultValue
+        }`
 
 // ------------------------------- loop ------------------------------ //
 export const makeLoop = (operator: string): BinopTildeCodeGenerator => {
@@ -73,17 +75,16 @@ export const makeLoop = (operator: string): BinopTildeCodeGenerator => {
     }
 }
 
-const makeLoopSignal = (operator: string): BinopTildeCodeGenerator => (
-    _,
-    { ins, outs }
-) => `${outs.$0} = ${ins.$0} ${operator} ${ins.$1_signal}`
+const makeLoopSignal =
+    (operator: string): BinopTildeCodeGenerator =>
+    (_, { ins, outs }) =>
+        `${outs.$0} = ${ins.$0} ${operator} ${ins.$1_signal}`
 
-const makeLoopMessage = (operator: string): BinopTildeCodeGenerator => (
-    _,
-    { ins, outs, state, macros }
-) =>
-    // prettier-ignore
-    `
+const makeLoopMessage =
+    (operator: string): BinopTildeCodeGenerator =>
+    (_, { ins, outs, state, macros }) =>
+        // prettier-ignore
+        `
         if (${ins.$1_message}.length) {
             const ${macros.typedVarMessage('inMessage')} = ${ins.$1_message}.pop()
             ${state.rightOp} = ${macros.readMessageFloatDatum('inMessage', 0)}

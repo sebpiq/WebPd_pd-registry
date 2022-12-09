@@ -9,19 +9,22 @@
  *
  */
 
-
-import assert from "assert"
-import NODE_BUILDERS from "./node-builders"
-import { pdJsonNodeDefaults, pdJsonPatchDefaults } from '@webpd/pd-json/src/test-helpers'
-import { PdJson } from "@webpd/pd-json"
+import assert from 'assert'
+import NODE_BUILDERS from './node-builders'
+import {
+    pdJsonNodeDefaults,
+    pdJsonPatchDefaults,
+} from '@webpd/pd-json/src/test-helpers'
+import { PdJson } from '@webpd/pd-json'
 
 describe('node-builders', () => {
-
     const PATCH = pdJsonPatchDefaults('0')
 
     describe('mixer~', () => {
         it('build should create inlets for channelCount', () => {
-            const partialNode = NODE_BUILDERS['mixer~'].build({ channelCount: 3 })
+            const partialNode = NODE_BUILDERS['mixer~'].build({
+                channelCount: 3,
+            })
             assert.deepStrictEqual(partialNode.inlets, {
                 '0': { type: 'signal', id: '0' },
                 '1': { type: 'signal', id: '1' },
@@ -31,15 +34,14 @@ describe('node-builders', () => {
     })
 
     describe('dac~', () => {
-
         it('translateArgs should convert channel indices to 0-indexed', () => {
             const pdNode = {
                 ...pdJsonNodeDefaults('0'),
-                args: [ 1, 2 ]
+                args: [1, 2],
             }
             const args = NODE_BUILDERS['dac~'].translateArgs(pdNode, PATCH)
             assert.deepStrictEqual(args, {
-                channelMapping: [0, 1]
+                channelMapping: [0, 1],
             })
         })
 
@@ -47,23 +49,31 @@ describe('node-builders', () => {
             const patch: PdJson.Patch = {
                 ...PATCH,
                 connections: [
-                    {source: {nodeId: 'someNode', portletId: 0}, sink: { nodeId: 'dac', portletId: 0 }},
-                    {source: {nodeId: 'someNode', portletId: 0}, sink: { nodeId: 'dac', portletId: 2 }},
-                ]
+                    {
+                        source: { nodeId: 'someNode', portletId: 0 },
+                        sink: { nodeId: 'dac', portletId: 0 },
+                    },
+                    {
+                        source: { nodeId: 'someNode', portletId: 0 },
+                        sink: { nodeId: 'dac', portletId: 2 },
+                    },
+                ],
             }
             const pdNode = {
                 ...pdJsonNodeDefaults('0'),
                 id: 'dac',
-                args: [] as Array<number>
+                args: [] as Array<number>,
             }
             const args = NODE_BUILDERS['dac~'].translateArgs(pdNode, patch)
             assert.deepStrictEqual(args, {
-                channelMapping: [0, 1, 2]
+                channelMapping: [0, 1, 2],
             })
         })
 
         it('build should create inlets for channelMapping', () => {
-            const partialNode = NODE_BUILDERS['dac~'].build({ channelMapping: [0, 2, 10] })
+            const partialNode = NODE_BUILDERS['dac~'].build({
+                channelMapping: [0, 2, 10],
+            })
             assert.deepStrictEqual(partialNode.inlets, {
                 '0': { type: 'signal', id: '0' },
                 '1': { type: 'signal', id: '1' },
@@ -71,5 +81,4 @@ describe('node-builders', () => {
             })
         })
     })
-
 })

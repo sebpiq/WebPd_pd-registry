@@ -9,8 +9,14 @@
  *
  */
 
-import { MESSAGE_DATUM_TYPE_STRING, MESSAGE_DATUM_TYPE_FLOAT } from '@webpd/compiler-js/src/constants'
-import { NodeCodeGenerator, NodeImplementation } from '@webpd/compiler-js/src/types'
+import {
+    MESSAGE_DATUM_TYPE_STRING,
+    MESSAGE_DATUM_TYPE_FLOAT,
+} from '@webpd/compiler-js/src/constants'
+import {
+    NodeCodeGenerator,
+    NodeImplementation,
+} from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type TabplayTildeCodeGenerator = NodeCodeGenerator<
@@ -123,11 +129,12 @@ export const loop: TabplayTildeCodeGenerator = (
 `
 
 // ------------------------------------------------------------------- //
-export const stateVariables: TabplayTildeNodeImplementation['stateVariables'] = [
-    'array',
-    'readPosition',
-    'readUntil',
-    'funcSetArrayName',
-    'funcPlay',
-    'funcHandleMessage',
-]
+export const stateVariables: TabplayTildeNodeImplementation['stateVariables'] =
+    [
+        'array',
+        'readPosition',
+        'readUntil',
+        'funcSetArrayName',
+        'funcPlay',
+        'funcHandleMessage',
+    ]

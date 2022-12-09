@@ -30,10 +30,7 @@ const binaryOperatortildeBuilder: NodeBuilder<
             '0': { type: 'signal', id: '0' },
         },
     }),
-    rerouteConnectionIn: (
-        outlet,
-        inletId,
-    ): DspGraph.PortletId => {
+    rerouteConnectionIn: (outlet, inletId): DspGraph.PortletId => {
         if (inletId === '1') {
             return outlet.type === 'message' ? '1_message' : '1_signal'
         }
@@ -55,10 +52,7 @@ const oscTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['osc~']> = {
             '0': { type: 'signal', id: '0' },
         },
     }),
-    rerouteConnectionIn: (
-        outlet,
-        inletId,
-    ): DspGraph.PortletId => {
+    rerouteConnectionIn: (outlet, inletId): DspGraph.PortletId => {
         if (inletId === '0') {
             return outlet.type === 'message' ? '0_message' : '0_signal'
         }
@@ -127,7 +121,7 @@ const dacTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['dac~']> = {
             // If no channel is provided, since a patch doesn't contain the channel count info,
             // we just guess the `channelMapping` according to inlets that are defined on the dac.
             const dacInletIds = new Set<number>()
-            patch.connections.forEach(connection => {
+            patch.connections.forEach((connection) => {
                 if (connection.sink.nodeId === pdNode.id) {
                     dacInletIds.add(connection.sink.portletId)
                 }

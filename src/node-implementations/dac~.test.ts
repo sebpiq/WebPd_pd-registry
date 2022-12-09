@@ -12,9 +12,7 @@
 import { makeGraph } from '@webpd/dsp-graph/src/test-helpers'
 import NODE_IMPLEMENTATIONS from '.'
 import assert from 'assert'
-import {
-    NodeImplementations,
-} from '@webpd/compiler-js/src/types'
+import { NodeImplementations } from '@webpd/compiler-js/src/types'
 import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
@@ -79,9 +77,8 @@ describe('dac~', () => {
             },
         })
 
-        const code = nodeImplementationsTestHelpers.executeCompilation(
-            compilation
-        )
+        const code =
+            nodeImplementationsTestHelpers.executeCompilation(compilation)
         const engine = await nodeImplementationsTestHelpers.getEngine(
             compilation.target,
             code
@@ -102,7 +99,10 @@ describe('dac~', () => {
         return results
     }
 
-    const assertEngineOutputs = async (args: NODE_ARGUMENTS_TYPES['dac~'], expected: EngineOutputs) => {
+    const assertEngineOutputs = async (
+        args: NODE_ARGUMENTS_TYPES['dac~'],
+        expected: EngineOutputs
+    ) => {
         assert.deepStrictEqual(
             await generateFrames('javascript', args),
             expected

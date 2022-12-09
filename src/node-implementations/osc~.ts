@@ -9,7 +9,10 @@
  *
  */
 
-import { NodeCodeGenerator, NodeImplementation } from '@webpd/compiler-js/src/types'
+import {
+    NodeCodeGenerator,
+    NodeImplementation,
+} from '@webpd/compiler-js/src/types'
 import { DspGraph } from '@webpd/dsp-graph'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 

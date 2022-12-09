@@ -10,7 +10,10 @@
  */
 
 import { MESSAGE_DATUM_TYPE_FLOAT } from '@webpd/compiler-js/src/constants'
-import { NodeCodeGenerator, NodeImplementation } from '@webpd/compiler-js/src/types'
+import {
+    NodeCodeGenerator,
+    NodeImplementation,
+} from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type MetroCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['metro']>
