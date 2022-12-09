@@ -14,7 +14,7 @@ import {
     NodeCodeGenerator,
     NodeImplementation,
     NodeImplementations,
-} from '@webpd/compiler-js'
+} from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type BinopTildeCodeGenerator = NodeCodeGenerator<

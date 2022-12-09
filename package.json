@@ -2,7 +2,7 @@
   "name": "@webpd/pd-registry",
   "version": "0.1.0",
   "description": "Compiles a DSP graph from PdJson objects",
-  "main": "./dist/index.js",
+  "main": "./dist/WebPd_pd-registry/index.js",
   "types": "./dist/types/index.d.ts",
   "type": "module",
   "scripts": {
@@ -33,7 +33,6 @@
     "@webpd/pd-json": "file:../WebPd_pd-json",
     "jest": "^28.1.0",
     "rollup": "^2.74.1",
-    "rollup-plugin-dts": "^4.2.1",
     "ts-jest": "^28.0.3"
   },
   "dependencies": {

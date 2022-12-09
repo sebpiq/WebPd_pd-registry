@@ -14,8 +14,9 @@ import NODE_IMPLEMENTATIONS from '.'
 import assert from 'assert'
 import {
     NodeImplementations,
-    nodeImplementationsTestHelpers,
-} from '@webpd/compiler-js'
+} from '@webpd/compiler-js/src/types'
+import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
+import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type EngineOutputs = Array<Array<number>>
 
@@ -101,7 +102,7 @@ describe('dac~', () => {
         return results
     }
 
-    const assertEngineOutputs = async (args: any, expected: EngineOutputs) => {
+    const assertEngineOutputs = async (args: NODE_ARGUMENTS_TYPES['dac~'], expected: EngineOutputs) => {
         assert.deepStrictEqual(
             await generateFrames('javascript', args),
             expected
@@ -113,7 +114,7 @@ describe('dac~', () => {
     }
 
     it('should route the channels according to arguments', async () => {
-        await assertEngineOutputs({ channels: [0, 3] }, [
+        await assertEngineOutputs({ channelMapping: [0, 3] }, [
             [0, 0, 0, 0],
             [1, 0, 0, 10],
             [2, 0, 0, 20],
@@ -121,17 +122,8 @@ describe('dac~', () => {
         ])
     })
 
-    it('should route to channels in default order if no channels mapping provided', async () => {
-        await assertEngineOutputs({}, [
-            [0, 0, 0, 0],
-            [1, 10, 100, 1000],
-            [2, 20, 200, 2000],
-            [3, 30, 300, 3000],
-        ])
-    })
-
     it('should ignore channels that are out of bounds', async () => {
-        await assertEngineOutputs({ channels: [-1, 2, 10] }, [
+        await assertEngineOutputs({ channelMapping: [-1, 2, 10] }, [
             [0, 0, 0, 0],
             [0, 0, 10, 0],
             [0, 0, 20, 0],

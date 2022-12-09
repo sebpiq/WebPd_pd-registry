@@ -9,7 +9,7 @@
  *
  */
 
-import { NodeCodeGenerator } from '@webpd/compiler-js'
+import { NodeCodeGenerator } from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type MixerTildeCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['mixer~']>

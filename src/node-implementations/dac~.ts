@@ -9,7 +9,7 @@
  *
  */
 
-import { NodeCodeGenerator } from '@webpd/compiler-js'
+import { NodeCodeGenerator } from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type DacTildeCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['dac~']>
@@ -27,7 +27,7 @@ export const loop: DacTildeCodeGenerator = (
     }
     // Map inputs to corresponding channel
     const channelMapping: Array<number> =
-        node.args.channels || defaultChannelMapping
+        node.args.channelMapping || defaultChannelMapping
     for (let i = 0; i < channelMapping.length; i++) {
         const destination = channelMapping[i]
         // Ignore channels that are out of bounds

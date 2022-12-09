@@ -10,7 +10,7 @@
  */
 
 import assert from 'assert'
-import { nodeImplementationsTestHelpers } from '@webpd/compiler-js'
+import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
 import NODE_IMPLEMENTATIONS from '.'
 import NODE_BUILDERS from '../node-builders'
 import { buildNode } from './test-helpers'

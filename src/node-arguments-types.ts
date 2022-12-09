@@ -11,8 +11,8 @@
 
 interface NODE_ARGUMENTS_TYPES {
     'osc~': { frequency: number }
-    'dac~': { channels: Array<number> }
-    'mixer~': { channels: number }
+    'dac~': { channelMapping: Array<number> }
+    'mixer~': { channelCount: number }
     'tabplay~': { arrayName: string }
     msg: { template: Array<string | number> }
     metro: { rate: number }

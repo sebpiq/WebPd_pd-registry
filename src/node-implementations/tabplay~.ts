@@ -9,12 +9,8 @@
  *
  */
 
-import {
-    NodeCodeGenerator,
-    NodeImplementation,
-    MESSAGE_DATUM_TYPE_STRING,
-    MESSAGE_DATUM_TYPE_FLOAT,
-} from '@webpd/compiler-js'
+import { MESSAGE_DATUM_TYPE_STRING, MESSAGE_DATUM_TYPE_FLOAT } from '@webpd/compiler-js/src/constants'
+import { NodeCodeGenerator, NodeImplementation } from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type TabplayTildeCodeGenerator = NodeCodeGenerator<

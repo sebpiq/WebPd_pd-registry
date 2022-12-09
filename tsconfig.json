@@ -3,6 +3,7 @@
     "include": [
         "src",
         "@types/**/*.d.ts",
-        "node_modules/@webpd/dev/types/*.ts"
+        "node_modules/@webpd/dev/types/*.ts",
+        "*.d.ts"
     ]
 }

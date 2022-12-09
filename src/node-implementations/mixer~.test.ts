@@ -9,7 +9,7 @@
  *
  */
 
-import { nodeImplementationsTestHelpers } from '@webpd/compiler-js'
+import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
 import NODE_IMPLEMENTATIONS from '.'
 import NODE_BUILDERS from '../node-builders'
 import { buildNode } from './test-helpers'
@@ -19,7 +19,7 @@ describe('mixer~', () => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
                 node: buildNode(NODE_BUILDERS['mixer~'], 'mixer~', {
-                    channels: 3,
+                    channelCount: 3,
                 }),
                 nodeImplementations: NODE_IMPLEMENTATIONS,
             },

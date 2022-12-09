@@ -17,8 +17,8 @@ import NODE_ARGUMENTS_TYPES from './node-arguments-types'
 const binaryOperatortildeBuilder: NodeBuilder<
     NODE_ARGUMENTS_TYPES['_BINOP_TILDE']
 > = {
-    translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
-        value: validation.assertNumber(objectArgs[0]),
+    translateArgs: (pdNode) => ({
+        value: validation.assertNumber(pdNode.args[0]),
     }),
     build: () => ({
         inlets: {
@@ -31,8 +31,8 @@ const binaryOperatortildeBuilder: NodeBuilder<
         },
     }),
     rerouteConnectionIn: (
-        outlet: DspGraph.Portlet,
-        inletId: DspGraph.PortletId
+        outlet,
+        inletId,
     ): DspGraph.PortletId => {
         if (inletId === '1') {
             return outlet.type === 'message' ? '1_message' : '1_signal'
@@ -42,8 +42,8 @@ const binaryOperatortildeBuilder: NodeBuilder<
 }
 
 const oscTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['osc~']> = {
-    translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
-        frequency: validation.assertNumber(objectArgs[0]),
+    translateArgs: (pdNode) => ({
+        frequency: validation.assertNumber(pdNode.args[0]),
     }),
     build: () => ({
         inlets: {
@@ -56,8 +56,8 @@ const oscTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['osc~']> = {
         },
     }),
     rerouteConnectionIn: (
-        outlet: DspGraph.Portlet,
-        inletId: DspGraph.PortletId
+        outlet,
+        inletId,
     ): DspGraph.PortletId => {
         if (inletId === '0') {
             return outlet.type === 'message' ? '0_message' : '0_signal'
@@ -79,12 +79,12 @@ const noiseTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['_NO_ARGS']> = {
 }
 
 const mixerTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['mixer~']> = {
-    translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
-        channels: validation.assertNumber(objectArgs[0]),
+    translateArgs: (pdNode) => ({
+        channelCount: validation.assertNumber(pdNode.args[0]),
     }),
-    build: (nodeArgs: DspGraph.NodeArguments) => {
+    build: (nodeArgs) => {
         const inlets: DspGraph.PortletMap = {}
-        for (let ch = 0; ch < nodeArgs.channels; ch++) {
+        for (let ch = 0; ch < nodeArgs.channelCount; ch++) {
             const inletId = ch.toString(10)
             inlets[inletId] = { type: 'signal', id: inletId }
         }
@@ -98,9 +98,9 @@ const mixerTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['mixer~']> = {
 }
 
 const tabplayTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['tabplay~']> = {
-    translateArgs: (objectArgs: PdJson.ObjectArgs, patch: PdJson.Patch) => ({
+    translateArgs: (pdNode, patch) => ({
         arrayName: pdJsonHelpers.resolveDollarArg(
-            objectArgs[0].toString(),
+            pdNode.args[0].toString(),
             patch
         ),
     }),
@@ -116,14 +116,32 @@ const tabplayTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['tabplay~']> = {
 }
 
 const dacTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['dac~']> = {
-    translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
-        // Channels are provided as 1-indexed, so we translate them back to 0-indexed.
-        channels: objectArgs.map(
-            (channel) => validation.assertNumber(channel) - 1
-        ),
-    }),
-    build: (nodeArgs: DspGraph.NodeArguments) => ({
-        inlets: (nodeArgs.channels as Array<number>).reduce((inlets, _, i) => {
+    translateArgs: (pdNode, patch) => {
+        let channelMapping: Array<number>
+        if (pdNode.args.length) {
+            // Channels are provided as 1-indexed, so we translate them back to 0-indexed.
+            channelMapping = pdNode.args.map(
+                (channel) => validation.assertNumber(channel) - 1
+            )
+        } else {
+            // If no channel is provided, since a patch doesn't contain the channel count info,
+            // we just guess the `channelMapping` according to inlets that are defined on the dac.
+            const dacInletIds = new Set<number>()
+            patch.connections.forEach(connection => {
+                if (connection.sink.nodeId === pdNode.id) {
+                    dacInletIds.add(connection.sink.portletId)
+                }
+            })
+            const maxInlet = Math.max(...dacInletIds)
+            channelMapping = []
+            for (let channel = 0; channel <= maxInlet; channel++) {
+                channelMapping.push(channel)
+            }
+        }
+        return { channelMapping }
+    },
+    build: (nodeArgs) => ({
+        inlets: nodeArgs.channelMapping.reduce((inlets, _, i) => {
             return {
                 ...inlets,
                 [i]: { type: 'signal', id: i },
@@ -135,8 +153,8 @@ const dacTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['dac~']> = {
 }
 
 const msgBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['msg']> = {
-    translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
-        template: objectArgs,
+    translateArgs: (pdNode) => ({
+        template: pdNode.args,
     }),
     build: () => ({
         inlets: {
@@ -149,8 +167,8 @@ const msgBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['msg']> = {
 }
 
 const metroBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['metro']> = {
-    translateArgs: (objectArgs: PdJson.ObjectArgs) => ({
-        rate: validation.assertNumber(objectArgs[0]),
+    translateArgs: (pdNode) => ({
+        rate: validation.assertNumber(pdNode.args[0]),
     }),
     build: () => ({
         inlets: {

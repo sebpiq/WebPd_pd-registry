@@ -9,7 +9,7 @@
  *
  */
 
-import { NodeCodeGenerator, NodeImplementation } from '@webpd/compiler-js'
+import { NodeCodeGenerator, NodeImplementation } from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type LoadbangCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['_NO_ARGS']>
