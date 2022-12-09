@@ -144,7 +144,7 @@ const dacTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['dac~']> = {
         inlets: nodeArgs.channelMapping.reduce((inlets, _, i) => {
             return {
                 ...inlets,
-                [i]: { type: 'signal', id: i },
+                [i]: { type: 'signal', id: i.toString() },
             }
         }, {} as DspGraph.PortletMap),
         outlets: {},
