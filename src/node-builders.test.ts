@@ -16,68 +16,132 @@ import {
     pdJsonPatchDefaults,
 } from '@webpd/pd-json/src/test-helpers'
 import { PdJson } from '@webpd/pd-json'
+import { PartialNode } from '@webpd/pd-json/src/types'
+import { DspGraph } from '@webpd/dsp-graph'
 
 describe('node-builders', () => {
     const PATCH = pdJsonPatchDefaults('0')
 
-    describe('mixer~', () => {
-        it('build should create inlets for channelCount', () => {
-            const partialNode = NODE_BUILDERS['mixer~'].build({
-                channelCount: 3,
+    const NODE_ID = '0'
+
+    const testNodeTranslateArgs = (
+        objectType: keyof typeof NODE_BUILDERS,
+        args: PdJson.ObjectArgs,
+        expectedNodeArgs: DspGraph.NodeArguments,
+        patch = PATCH
+    ) => {
+        const pdNode = {
+            ...pdJsonNodeDefaults(NODE_ID),
+            args,
+        }
+        const nodeArgs = (NODE_BUILDERS as any)[objectType].translateArgs(
+            pdNode,
+            patch
+        )
+        assert.deepStrictEqual(nodeArgs, expectedNodeArgs)
+    }
+
+    const testNodeBuild = (
+        objectType: keyof typeof NODE_BUILDERS,
+        nodeArgs: DspGraph.NodeArguments,
+        expectedPartialNode: Partial<PartialNode>
+    ) => {
+        const partialNode = NODE_BUILDERS[objectType].build(nodeArgs as any)
+        Object.entries(expectedPartialNode).forEach(([key, value]) => {
+            assert.ok(key in partialNode)
+            assert.deepStrictEqual((partialNode as any)[key], value)
+        })
+    }
+
+    describe('binop~', () => {
+        describe('translateArgs', () => {
+            it('should have optional first arg', () => {
+                testNodeTranslateArgs('+~', [], { value: undefined })
             })
-            assert.deepStrictEqual(partialNode.inlets, {
-                '0': { type: 'signal', id: '0' },
-                '1': { type: 'signal', id: '1' },
-                '2': { type: 'signal', id: '2' },
+        })
+    })
+
+    describe('osc~', () => {
+        describe('translateArgs', () => {
+            it('should have optional first arg', () => {
+                testNodeTranslateArgs('osc~', [], { frequency: undefined })
+            })
+        })
+    })
+
+    describe('mixer~', () => {
+        describe('build', () => {
+            it('should create inlets for channelCount', () => {
+                testNodeBuild(
+                    'mixer~',
+                    {
+                        channelCount: 3,
+                    },
+                    {
+                        inlets: {
+                            '0': { type: 'signal', id: '0' },
+                            '1': { type: 'signal', id: '1' },
+                            '2': { type: 'signal', id: '2' },
+                        },
+                    }
+                )
             })
         })
     })
 
     describe('dac~', () => {
-        it('translateArgs should convert channel indices to 0-indexed', () => {
-            const pdNode = {
-                ...pdJsonNodeDefaults('0'),
-                args: [1, 2],
-            }
-            const args = NODE_BUILDERS['dac~'].translateArgs(pdNode, PATCH)
-            assert.deepStrictEqual(args, {
-                channelMapping: [0, 1],
+        describe('translateArgs', () => {
+            it('should convert channel indices to 0-indexed', () => {
+                testNodeTranslateArgs('dac~', [1, 2], {
+                    channelMapping: [0, 1],
+                })
+            })
+
+            it('should infer default channelMapping from incoming connections', () => {
+                testNodeTranslateArgs(
+                    'dac~',
+                    [],
+                    {
+                        channelMapping: [0, 1, 2],
+                    },
+                    {
+                        ...PATCH,
+                        connections: [
+                            {
+                                source: { nodeId: 'someNode', portletId: 0 },
+                                sink: { nodeId: NODE_ID, portletId: 0 },
+                            },
+                            {
+                                source: { nodeId: 'someNode', portletId: 0 },
+                                sink: { nodeId: NODE_ID, portletId: 2 },
+                            },
+                        ],
+                    }
+                )
             })
         })
 
-        it('translateArgs should infer default channelMapping from incoming connections', () => {
-            const patch: PdJson.Patch = {
-                ...PATCH,
-                connections: [
+        describe('build', () => {
+            it('should create inlets for channelMapping', () => {
+                testNodeBuild(
+                    'dac~',
+                    { channelMapping: [0, 2, 10] },
                     {
-                        source: { nodeId: 'someNode', portletId: 0 },
-                        sink: { nodeId: 'dac', portletId: 0 },
-                    },
-                    {
-                        source: { nodeId: 'someNode', portletId: 0 },
-                        sink: { nodeId: 'dac', portletId: 2 },
-                    },
-                ],
-            }
-            const pdNode = {
-                ...pdJsonNodeDefaults('0'),
-                id: 'dac',
-                args: [] as Array<number>,
-            }
-            const args = NODE_BUILDERS['dac~'].translateArgs(pdNode, patch)
-            assert.deepStrictEqual(args, {
-                channelMapping: [0, 1, 2],
+                        inlets: {
+                            '0': { type: 'signal', id: '0' },
+                            '1': { type: 'signal', id: '1' },
+                            '2': { type: 'signal', id: '2' },
+                        },
+                    }
+                )
             })
         })
+    })
 
-        it('build should create inlets for channelMapping', () => {
-            const partialNode = NODE_BUILDERS['dac~'].build({
-                channelMapping: [0, 2, 10],
-            })
-            assert.deepStrictEqual(partialNode.inlets, {
-                '0': { type: 'signal', id: '0' },
-                '1': { type: 'signal', id: '1' },
-                '2': { type: 'signal', id: '2' },
+    describe('metro', () => {
+        describe('translateArgs', () => {
+            it('should have optional first arg', () => {
+                testNodeTranslateArgs('metro', [], { rate: undefined })
             })
         })
     })

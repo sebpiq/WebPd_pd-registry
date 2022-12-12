@@ -10,7 +10,7 @@
  */
 
 import { DspGraph } from '@webpd/dsp-graph'
-import { NodeBuilder, PdJson, pdJsonHelpers, validation } from '@webpd/pd-json'
+import { NodeBuilder, pdJsonHelpers, validation } from '@webpd/pd-json'
 import NODE_ARGUMENTS_TYPES from './node-arguments-types'
 
 // Same builder for [+~], [*~], etc ...
@@ -18,7 +18,7 @@ const binaryOperatortildeBuilder: NodeBuilder<
     NODE_ARGUMENTS_TYPES['_BINOP_TILDE']
 > = {
     translateArgs: (pdNode) => ({
-        value: validation.assertNumber(pdNode.args[0]),
+        value: validation.assertOptionalNumber(pdNode.args[0]),
     }),
     build: () => ({
         inlets: {
@@ -40,7 +40,7 @@ const binaryOperatortildeBuilder: NodeBuilder<
 
 const oscTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['osc~']> = {
     translateArgs: (pdNode) => ({
-        frequency: validation.assertNumber(pdNode.args[0]),
+        frequency: validation.assertOptionalNumber(pdNode.args[0]),
     }),
     build: () => ({
         inlets: {
@@ -162,7 +162,7 @@ const msgBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['msg']> = {
 
 const metroBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['metro']> = {
     translateArgs: (pdNode) => ({
-        rate: validation.assertNumber(pdNode.args[0]),
+        rate: validation.assertOptionalNumber(pdNode.args[0]),
     }),
     build: () => ({
         inlets: {

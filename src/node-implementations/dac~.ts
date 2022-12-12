@@ -15,6 +15,7 @@ import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 type DacTildeCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['dac~']>
 
 // ------------------------------- loop ------------------------------ //
+// TODO : set message not supported
 export const loop: DacTildeCodeGenerator = (
     node,
     { ins, macros },
