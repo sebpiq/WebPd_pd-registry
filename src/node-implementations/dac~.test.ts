@@ -83,7 +83,12 @@ describe('dac~', () => {
             compilation.target,
             code
         )
-        const engineOutput = nodeImplementationsTestHelpers.buildEngineOutput(
+        const engineInput = nodeImplementationsTestHelpers.buildEngineBlock(
+            Float32Array,
+            channelCount,
+            blockSize
+        )
+        const engineOutput = nodeImplementationsTestHelpers.buildEngineBlock(
             Float32Array,
             channelCount,
             blockSize
@@ -92,7 +97,7 @@ describe('dac~', () => {
 
         const results: EngineOutputs = []
         for (let i = 0; i < iterations; i++) {
-            engine.loop(engineOutput)
+            engine.loop(engineInput, engineOutput)
             // Block size 1, so we flatten the array and get just the first sample
             results.push(engineOutput.map((channelValues) => channelValues[0]))
         }
