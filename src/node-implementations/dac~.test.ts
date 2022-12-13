@@ -64,7 +64,7 @@ describe('dac~', () => {
             },
         })
 
-        const channelCount = 4
+        const channelCount = { out: 4, in: 0 }
         const blockSize = 1
         const iterations = 4
         const compilation = nodeImplementationsTestHelpers.makeCompilation({
@@ -85,12 +85,12 @@ describe('dac~', () => {
         )
         const engineInput = nodeImplementationsTestHelpers.buildEngineBlock(
             Float32Array,
-            channelCount,
+            channelCount.in,
             blockSize
         )
         const engineOutput = nodeImplementationsTestHelpers.buildEngineBlock(
             Float32Array,
-            channelCount,
+            channelCount.out,
             blockSize
         )
         engine.configure(44100, blockSize)

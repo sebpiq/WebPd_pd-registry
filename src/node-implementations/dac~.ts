@@ -23,7 +23,7 @@ export const loop: DacTildeCodeGenerator = (
 ) => {
     let loopStr = ''
     const defaultChannelMapping: Array<number> = []
-    for (let channel = 0; channel < audioSettings.channelCount; channel++) {
+    for (let channel = 0; channel < audioSettings.channelCount.out; channel++) {
         defaultChannelMapping.push(channel)
     }
     // Map inputs to corresponding channel
@@ -32,7 +32,7 @@ export const loop: DacTildeCodeGenerator = (
     for (let i = 0; i < channelMapping.length; i++) {
         const destination = channelMapping[i]
         // Ignore channels that are out of bounds
-        if (destination < 0 || audioSettings.channelCount <= destination) {
+        if (destination < 0 || audioSettings.channelCount.out <= destination) {
             continue
         }
         loopStr += `\n${macros.fillInLoopOutput(destination, ins[`${i}`])}`
