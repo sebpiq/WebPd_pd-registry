@@ -138,6 +138,56 @@ describe('node-builders', () => {
         })
     })
 
+    describe('adc~', () => {
+        describe('translateArgs', () => {
+            it('should convert channel indices to 0-indexed', () => {
+                testNodeTranslateArgs('adc~', [1, 2], {
+                    channelMapping: [0, 1],
+                })
+            })
+
+            it('should infer default channelMapping from incoming connections', () => {
+                testNodeTranslateArgs(
+                    'adc~',
+                    [],
+                    {
+                        channelMapping: [0, 1, 2, 3],
+                    },
+                    {
+                        ...PATCH,
+                        connections: [
+                            {
+                                source: { nodeId: NODE_ID, portletId: 0 },
+                                sink: { nodeId: 'someNode', portletId: 0 },
+                            },
+                            {
+                                source: { nodeId: NODE_ID, portletId: 3 },
+                                sink: { nodeId: 'someNode', portletId: 1 },
+                            },
+                        ],
+                    }
+                )
+            })
+        })
+
+        describe('build', () => {
+            it('should create inlets for channelMapping', () => {
+                testNodeBuild(
+                    'adc~',
+                    { channelMapping: [12, 1, 6, 7] },
+                    {
+                        outlets: {
+                            '0': { type: 'signal', id: '0' },
+                            '1': { type: 'signal', id: '1' },
+                            '2': { type: 'signal', id: '2' },
+                            '3': { type: 'signal', id: '3' },
+                        },
+                    }
+                )
+            })
+        })
+    })
+
     describe('metro', () => {
         describe('translateArgs', () => {
             it('should have optional first arg', () => {

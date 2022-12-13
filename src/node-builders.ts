@@ -146,6 +146,42 @@ const dacTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['dac~']> = {
     }),
 }
 
+const adcTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['adc~']> = {
+    translateArgs: (pdNode, patch) => {
+        let channelMapping: Array<number>
+        if (pdNode.args.length) {
+            // Channels are provided as 1-indexed, so we translate them back to 0-indexed.
+            channelMapping = pdNode.args.map(
+                (channel) => validation.assertNumber(channel) - 1
+            )
+        } else {
+            // If no channel is provided, since a patch doesn't contain the channel count info,
+            // we just guess the `channelMapping` according to inlets that are defined on the dac.
+            const adcOutletIds = new Set<number>()
+            patch.connections.forEach((connection) => {
+                if (connection.source.nodeId === pdNode.id) {
+                    adcOutletIds.add(connection.source.portletId)
+                }
+            })
+            const maxOutlet = Math.max(...adcOutletIds)
+            channelMapping = []
+            for (let channel = 0; channel <= maxOutlet; channel++) {
+                channelMapping.push(channel)
+            }
+        }
+        return { channelMapping }
+    },
+    build: (nodeArgs) => ({
+        inlets: {},
+        outlets: nodeArgs.channelMapping.reduce((outlets, _, i) => {
+            return {
+                ...outlets,
+                [i]: { type: 'signal', id: i.toString() },
+            }
+        }, {} as DspGraph.PortletMap),
+    }),
+}
+
 const msgBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['msg']> = {
     translateArgs: (pdNode) => ({
         template: pdNode.args,
@@ -192,6 +228,7 @@ const NODE_BUILDERS = {
     'noise~': noiseTildeBuilder,
     'mixer~': mixerTildeBuilder,
     'dac~': dacTildeBuilder,
+    'adc~': adcTildeBuilder,
     'tabplay~': tabplayTildeBuilder,
     msg: msgBuilder,
     metro: metroBuilder,

@@ -12,6 +12,7 @@
 interface NODE_ARGUMENTS_TYPES {
     'osc~': { frequency: number }
     'dac~': { channelMapping: Array<number> }
+    'adc~': { channelMapping: Array<number> }
     'mixer~': { channelCount: number }
     'tabplay~': { arrayName: string }
     msg: { template: Array<string | number> }

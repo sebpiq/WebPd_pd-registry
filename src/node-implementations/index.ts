@@ -11,6 +11,7 @@
 
 import * as oscTilde from './osc~'
 import * as dacTilde from './dac~'
+import * as adcTilde from './adc~'
 import * as tabplayTilde from './tabplay~'
 import * as metro from './metro'
 import * as loadbang from './loadbang'
@@ -25,6 +26,7 @@ const NODE_IMPLEMENTATIONS = {
     'noise~': noiseTilde,
     'mixer~': mixerTilde,
     'dac~': dacTilde,
+    'adc~': adcTilde,
     'tabplay~': tabplayTilde,
     loadbang: loadbang,
     msg: msg,
