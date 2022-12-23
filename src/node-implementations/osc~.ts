@@ -69,7 +69,6 @@ const initializeMessage: OscTildeCodeGenerator = (node, { state }) => `
 `
 
 // ------------------------------- loop ------------------------------ //
-// TODO: right inlet, reset phase
 export const loop: OscTildeCodeGenerator = (...args) => {
     const [node] = args
     return _hasSignalInput(node) ? loopSignal(...args) : loopMessage(...args)

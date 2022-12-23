@@ -19,6 +19,7 @@ import binopTilde from './binop~'
 import * as mixerTilde from './mixer~'
 import * as noiseTilde from './noise~'
 import * as msg from './msg'
+import * as soundfiler from './soundfiler'
 
 const NODE_IMPLEMENTATIONS = {
     ...binopTilde,
@@ -31,6 +32,7 @@ const NODE_IMPLEMENTATIONS = {
     loadbang: loadbang,
     msg: msg,
     metro: metro,
+    soundfiler: soundfiler,
 }
 
 export default NODE_IMPLEMENTATIONS

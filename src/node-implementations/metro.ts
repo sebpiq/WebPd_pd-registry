@@ -9,7 +9,7 @@
  *
  */
 
-import { MESSAGE_DATUM_TYPE_FLOAT } from '@webpd/compiler-js/src/constants'
+import { MSG_DATUM_TYPE_FLOAT } from '@webpd/compiler-js/src/constants'
 import {
     NodeCodeGenerator,
     NodeImplementation,
@@ -43,7 +43,7 @@ export const declare: MetroCodeGenerator = (_, { state, ins, globs, macros }) =>
                 ${state.realNextTick} = 0
                 
             } else if (${macros.isMessageMatching('m', [
-                MESSAGE_DATUM_TYPE_FLOAT,
+                MSG_DATUM_TYPE_FLOAT,
             ])} || ${macros.isMessageMatching('m', ['bang'])}) {
                 ${state.nextTick} = ${globs.frame}
                 ${state.realNextTick} = ${macros.castToFloat(globs.frame)}
@@ -55,7 +55,7 @@ export const declare: MetroCodeGenerator = (_, { state, ins, globs, macros }) =>
 
         const ${state.funcHandleMessage1} = ${macros.functionHeader()} => {
             let m = ${ins.$1}.shift()
-            if (${macros.isMessageMatching('m', [MESSAGE_DATUM_TYPE_FLOAT])}) {
+            if (${macros.isMessageMatching('m', [MSG_DATUM_TYPE_FLOAT])}) {
                 ${state.funcSetRate}(${macros.readMessageFloatDatum('m', 0)})
                 
             } else {

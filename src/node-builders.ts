@@ -211,6 +211,19 @@ const metroBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['metro']> = {
     }),
 }
 
+const soundfilerBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['_NO_ARGS']> = {
+    translateArgs: (pdNode) => ({}),
+    build: () => ({
+        inlets: {
+            '0': { type: 'message', id: '0' },
+        },
+        outlets: {
+            '0': { type: 'message', id: '0' },
+        },
+        isEndSink: true,
+    }),
+}
+
 const loadbangBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['_NO_ARGS']> = {
     translateArgs: () => ({}),
     build: () => ({
@@ -233,6 +246,7 @@ const NODE_BUILDERS = {
     msg: msgBuilder,
     metro: metroBuilder,
     loadbang: loadbangBuilder,
+    soundfiler: soundfilerBuilder,
 }
 
 export default NODE_BUILDERS
