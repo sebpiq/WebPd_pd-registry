@@ -31,9 +31,9 @@ const ASC_MSG_STRING_TOKEN = MSG_DATUM_TYPES_ASSEMBLYSCRIPT[MSG_DATUM_TYPE_STRIN
 // ------------------------------ declare ------------------------------ //
 export const declare: TabplayTildeCodeGenerator = (
     node,
-    {ins, state, types, globs, macros},
+    {state, types, globs, macros},
 ) => `
-    let ${macros.typedVar(state.array, 'FloatArray')} = new ${types.FloatArrayType}(0)
+    let ${macros.typedVar(state.array, 'FloatArray')} = new ${types.FloatArray}(0)
     let ${macros.typedVar(state.arrayName, 'string')} = "${node.args.arrayName}"
     let ${macros.typedVar(state.readPosition, 'Int')} = 0
     let ${macros.typedVar(state.readUntil, 'Int')} = 0
@@ -43,7 +43,7 @@ export const declare: TabplayTildeCodeGenerator = (
     ], 'void')} => {
         ${state.arrayName} = arrayName
         if (!${globs.arrays}.has(arrayName)) {
-            ${state.array} = new ${types.FloatArrayType}(0)
+            ${state.array} = new ${types.FloatArray}(0)
         } else {
             ${state.array} = ${globs.arrays}.get(arrayName)
         }
@@ -69,7 +69,7 @@ export const declare: TabplayTildeCodeGenerator = (
                 return 
 
             } else if (msg_isFloatToken(m, 0)) {
-                ${state.readPosition} = i32(msg_readFloatDatum(m, 0))
+                ${state.readPosition} = ${types.Int}(msg_readFloatDatum(m, 0))
                 ${state.readUntil} = ${state.array}.length
                 return 
             }
@@ -86,10 +86,10 @@ export const declare: TabplayTildeCodeGenerator = (
                 msg_isFloatToken(m, 0)
                 && msg_isFloatToken(m, 1)
             ) {
-                ${state.readPosition} = i32(msg_readFloatDatum(m, 0))
-                ${state.readUntil} = i32(Math.min(
-                    ${types.FloatType}(${state.readPosition}) + msg_readFloatDatum(m, 1), 
-                    ${types.FloatType}(${state.array}.length)
+                ${state.readPosition} = ${types.Int}(msg_readFloatDatum(m, 0))
+                ${state.readUntil} = ${types.Int}(Math.min(
+                    ${types.Float}(${state.readPosition}) + msg_readFloatDatum(m, 1), 
+                    ${types.Float}(${state.array}.length)
                 ))
                 return
             }

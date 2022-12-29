@@ -19,7 +19,7 @@ type SoundfilerCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['_NO_ARGS'
 type SoundfilerNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['_NO_ARGS']>
 
 // ------------------------------ declare ------------------------------ //
-export const declare: SoundfilerCodeGenerator = (_, {macros, state, globs}) => `
+export const declare: SoundfilerCodeGenerator = (_, {macros, state, types, globs}) => `
     let ${macros.typedVar(state.arrayNames, 'Array<string>')} = []
 
     const ${state.funcHandleMessage0} = ${macros.typedFuncHeader([
@@ -48,7 +48,7 @@ export const declare: SoundfilerCodeGenerator = (_, {macros, state, globs}) => `
                 }
     
                 fs_readSoundFile(url, (id: fs_OperationId, status: fs_OperationStatus, sound: FloatArray[]) => {
-                    const ${macros.typedVar('channelCount', 'Int')} = i32(Math.min(${state.arrayNames}.length, sound.length))
+                    const ${macros.typedVar('channelCount', 'Int')} = ${types.Int}(Math.min(${state.arrayNames}.length, sound.length))
                     for (let channel = 0; channel < channelCount; channel++) {
                         ${globs.arrays}.set(${state.arrayNames}[channel], sound[channel])
                     }

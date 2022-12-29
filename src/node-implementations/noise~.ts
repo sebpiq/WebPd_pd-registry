@@ -19,5 +19,5 @@ type NoiseTildeCodeGenerator = NodeCodeGenerator<
 // TODO : left inlet ?
 // ------------------------------- loop ------------------------------ //
 export const loop: NoiseTildeCodeGenerator = (_, { outs, types }) => `
-    ${outs.$0} = ${types.FloatType}(Math.random() * 2 - 1)
+    ${outs.$0} = ${types.Float}(Math.random() * 2 - 1)
 `

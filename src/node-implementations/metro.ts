@@ -54,7 +54,7 @@ export const declare: MetroCodeGenerator = (node, { state, globs, macros, types 
                     || (msg_isStringToken(m, 0) && msg_readStringDatum(m, 0) === 'bang')
                 ) {
                     ${state.nextTick} = ${globs.frame}
-                    ${state.realNextTick} = ${types.FloatType}(${globs.frame})
+                    ${state.realNextTick} = ${types.Float}(${globs.frame})
                     return
                 }
             }
@@ -80,7 +80,7 @@ export const initialize: MetroCodeGenerator = (node, {state}) => `
 `
 
 // ------------------------------- loop ------------------------------ //
-export const loop: MetroCodeGenerator = (_, {state, ins, outs, globs, macros}) => `
+export const loop: MetroCodeGenerator = (_, {state, ins, outs, types, globs, macros}) => `
     while (${ins.$1}.length) {
         ${state.funcHandleMessage1}(${ins.$1}.shift())
     }
@@ -92,7 +92,7 @@ export const loop: MetroCodeGenerator = (_, {state, ins, outs, globs, macros}) =
         msg_writeStringDatum(m, 0, 'bang')
         ${outs.$0}.push(m)
         ${state.realNextTick} = ${state.realNextTick} + ${state.rate}
-        ${state.nextTick} = i32(Math.round(${state.realNextTick}))
+        ${state.nextTick} = ${types.Int}(Math.round(${state.realNextTick}))
     }
 `
 
