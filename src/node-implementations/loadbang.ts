@@ -9,8 +9,11 @@
  *
  */
 
+import { MSG_DATUM_TYPE_STRING } from '@webpd/compiler-js/src/constants'
+import { MSG_DATUM_TYPES_ASSEMBLYSCRIPT } from '@webpd/compiler-js/src/engine-assemblyscript/constants'
 import {
     NodeCodeGenerator,
+    NodeCodeSnippet,
     NodeImplementation,
 } from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
@@ -20,28 +23,40 @@ type LoadbangNodeImplementation = NodeImplementation<
     NODE_ARGUMENTS_TYPES['_NO_ARGS']
 >
 
+const ASC_MSG_STRING_TOKEN = MSG_DATUM_TYPES_ASSEMBLYSCRIPT[MSG_DATUM_TYPE_STRING]
+
 // ------------------------------ declare ------------------------------ //
-export const declare: LoadbangCodeGenerator = (_, { state, macros }) => `
-    let ${macros.typedVarInt(state.init)}
+export const declare: LoadbangCodeGenerator = (_, variableNames, {snippet}) => 
+    declareSnippet(snippet, variableNames)
+
+const declareSnippet: NodeCodeSnippet = (snippet, {state}) => snippet`
+    let ${state.init}: i32
 `
 
 // ------------------------------ initialize ------------------------------ //
-export const initialize: LoadbangCodeGenerator = (_, { state }) => `
+export const initialize: LoadbangCodeGenerator = (_, variableNames, {snippet}) => 
+    initializeSnippet(snippet, variableNames)
+    
+const initializeSnippet: NodeCodeSnippet = (snippet, {state}) => snippet`
     ${state.init} = 1
 `
 
 // ------------------------------- loop ------------------------------ //
-export const loop: LoadbangCodeGenerator = (_, { outs, state, macros }) => {
-    return `
-        if (${state.init}) {
-            ${state.init} = 0
-            ${macros.createMessage('m', ['bang'])}
-            ${outs.$0}.push(m)
-        }
-    `
-}
+export const loop: LoadbangCodeGenerator = (_, variableNames, {snippet}) => 
+    loopSnippet(snippet, variableNames)
+
+const loopSnippet: NodeCodeSnippet = (snippet, {state, outs}) => snippet`
+    if (${state.init}) {
+        ${state.init} = 0
+        const m: Message = msg_create([${ASC_MSG_STRING_TOKEN}, 4])
+        msg_writeStringDatum(m, 0, 'bang')
+        ${outs.$0}.push(m)
+    }
+`
 
 // ------------------------------------------------------------------- //
 export const stateVariables: LoadbangNodeImplementation['stateVariables'] = [
     'init',
 ]
+
+export const snippets = { declareSnippet, initializeSnippet, loopSnippet }

@@ -9,7 +9,6 @@
  *
  */
 
-import { MSG_DATUM_TYPE_STRING } from '@webpd/compiler-js/src/constants'
 import {
     NodeCodeGenerator,
     NodeImplementation,
@@ -20,49 +19,54 @@ type SoundfilerCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['_NO_ARGS'
 type SoundfilerNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['_NO_ARGS']>
 
 // ------------------------------ declare ------------------------------ //
-export const declare: SoundfilerCodeGenerator = (_, {macros, state, ins, globs}) => `
+export const declare: SoundfilerCodeGenerator = (_, {macros, state, globs}) => `
     let ${macros.typedVarStringArray(state.arrayNames)} = []
 
-    const ${state.funcHandleMessage0} = ${macros.functionHeader()} => {
-        let m = ${ins.$0}.shift()
-
-        if (${macros.isMessageMatching('m', ['read', MSG_DATUM_TYPE_STRING, MSG_DATUM_TYPE_STRING, MSG_DATUM_TYPE_STRING])}) {
-            ${macros.extractMessageStringTokens('m', 'mStrings')}
-            let ${macros.typedVarString('url')} = ''
-            for (let i = 0; i < mStrings.length; i++) {
-                let ${macros.typedVarString('sIndex')} = mStrings[i][0]
-                let ${macros.typedVarString('sValue')} = mStrings[i][1]
-                if (sValue.includes('/') || sValue.includes('.')) {
-                    url = sValue
-                    ${state.arrayNames} = []
-                } else if (url.length > 0) {
-                    ${state.arrayNames}.push(sValue)
+    const ${state.funcHandleMessage0} = ${macros.functionHeader(
+        macros.typedVarMessage('m')
+    )} => {
+        if (msg_getLength(m) >= 3) {
+            if (msg_readStringDatum(m, 0) === 'read) {
+                const stringsIndexes: Array<number> = []
+                const stringsValues: Array<string> = []
+                for (let i = 1; i < msg_getLength(m); i++) {
+                    if (msg_isStringToken(m, i)) {
+                        stringsIndexes.push(i)
+                        stringsValues.push(msg_readStringDatum(m, i))
+                    }
                 }
+                let ${macros.typedVarString('url')} = ''
+                for (let i = 0; i < stringsIndexes.length; i++) {
+                    let ${macros.typedVarString('sIndex')} = stringsIndexes[i]
+                    let ${macros.typedVarString('sValue')} = stringsValues[i]
+                    if (sValue.includes('/') || sValue.includes('.')) {
+                        url = sValue
+                        ${state.arrayNames} = []
+                    } else if (url.length > 0) {
+                        ${state.arrayNames}.push(sValue)
+                    }
+                }
+    
+                fs_readSoundFile(url, (id: fs_OperationId, status: fs_OperationStatus, sound: TypedArray[]) => {
+                    const ${macros.typedVarInt('channelCount')} = i32(Math.min(${state.arrayNames}.length, sound.length))
+                    for (let channel = 0; channel < channelCount; channel++) {
+                        ${globs.arrays}.set(${state.arrayNames}[channel], sound[channel])
+                    }
+                })
+                return
             }
 
-            fs_readSoundFile(url, (id: fs_OperationId, status: fs_OperationStatus, sound: TypedArray[]) => {
-                const ${macros.typedVarInt('channelCount')} = ${macros.castToInt(`Math.min(${state.arrayNames}.length, sound.length)`)}
-                for (let channel = 0; channel < channelCount; channel++) {
-                    ${globs.arrays}.set(${state.arrayNames}[channel], sound[channel])
-                }
-            })
-        
         } else {
             throw new Error("Unexpected message")
         }
     }
 `
 
-// ------------------------------ initialize ------------------------------ //
-export const initialize: SoundfilerCodeGenerator = (_, {state}) => `
-    ${state.arrayNames} = []
-`
-
 // ------------------------------- loop ------------------------------ //
 // TODO: right inlet, reset phase
 export const loop: SoundfilerCodeGenerator = (_, { state, ins }) => `
     while (${ins.$0}.length) {
-        ${state.funcHandleMessage0}()
+        ${state.funcHandleMessage0}(${ins.$0}.shift())
     }
 `
 

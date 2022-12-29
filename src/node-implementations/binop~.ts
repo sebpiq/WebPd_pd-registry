@@ -12,6 +12,7 @@
 import { DspGraph } from '@webpd/dsp-graph'
 import {
     NodeCodeGenerator,
+    NodeCodeSnippet,
     NodeImplementation,
     NodeImplementations,
 } from '@webpd/compiler-js/src/types'
@@ -27,70 +28,55 @@ type BinopTildeNodeImplementation = NodeImplementation<
 // ------------------------------ declare ------------------------------ //
 export const makeDeclare =
     (): BinopTildeCodeGenerator =>
-    (...args) => {
-        const [node] = args
-        return _hasSignalInput(node)
-            ? declareSignal(...args)
-            : declareMessage(...args)
-    }
+        (node, variableNames, {snippet}) =>
+            _hasSignalInput(node)
+                ? ''
+                : declareMessage(snippet, variableNames)
 
-const declareSignal: BinopTildeCodeGenerator = () => ``
-
-const declareMessage: BinopTildeCodeGenerator = (_, { state, macros }) =>
-    `let ${macros.typedVarFloat(state.rightOp)}`
+const declareMessage: NodeCodeSnippet = (snippet, { state, types }) =>
+    snippet`let ${state.rightOp}: ${types.FloatType}`
 
 // ------------------------------ initialize ------------------------------ //
 export const makeInitialize =
     (defaultValue: number): BinopTildeCodeGenerator =>
-    (...args) => {
-        const [node] = args
-        const initializeSignal = makeInitializeSignal(defaultValue)
-        const initializeMessage = makeInitializeMessage(defaultValue)
-        return _hasSignalInput(node)
-            ? initializeSignal(...args)
-            : initializeMessage(...args)
-    }
+        (node, variableNames, {snippet}) => {
+            const initialValue = (node.args.value || defaultValue).toString(10)
+            return _hasSignalInput(node)
+                ? signalInitializeSnippet(snippet, {...variableNames, initialValue})
+                : messageInitializeSnippet(snippet, {...variableNames, initialValue})
+        }
 
-const makeInitializeSignal =
-    (defaultValue: number): BinopTildeCodeGenerator =>
-    (node, { ins }) =>
-        `${ins.$1_signal} = ${node.args.value || defaultValue}`
+const signalInitializeSnippet: NodeCodeSnippet<{ initialValue: string }> = (snippet, { ins, initialValue }) =>
+    snippet`${ins.$1_signal} = ${initialValue}`
 
-const makeInitializeMessage =
-    (defaultValue: number): BinopTildeCodeGenerator =>
-    (node, { state }) =>
-        `${state.rightOp} = ${
-            node.args.value ? node.args.value.toString(10) : defaultValue
-        }`
+const messageInitializeSnippet: NodeCodeSnippet<{ initialValue: string }> = (snippet, { state, initialValue }) =>
+    snippet`${state.rightOp} = ${initialValue}`
+
 
 // ------------------------------- loop ------------------------------ //
-export const makeLoop = (operator: string): BinopTildeCodeGenerator => {
-    const loopSignal = makeLoopSignal(operator)
-    const loopMessage = makeLoopMessage(operator)
-    return (...args) => {
-        const [node] = args
-        return _hasSignalInput(node)
-            ? loopSignal(...args)
-            : loopMessage(...args)
-    }
+export const makeLoop = (operatorSnippet: NodeCodeSnippet<{ rightOp: string }>): BinopTildeCodeGenerator => {
+    return (node, variableNames, { snippet }) =>
+        _hasSignalInput(node)
+            ? operatorSnippet(snippet, { ...variableNames, rightOp: variableNames.ins.$1_signal })
+            : `
+                ${loopMessageSnippet(snippet, variableNames)}
+                ${operatorSnippet(snippet, {...variableNames, rightOp: variableNames.state.rightOp})}
+            `
 }
 
-const makeLoopSignal =
-    (operator: string): BinopTildeCodeGenerator =>
-    (_, { ins, outs }) =>
-        `${outs.$0} = ${ins.$0} ${operator} ${ins.$1_signal}`
-
-const makeLoopMessage =
-    (operator: string): BinopTildeCodeGenerator =>
-    (_, { ins, outs, state, macros }) =>
-        // prettier-ignore
-        `
+const loopMessageSnippet: NodeCodeSnippet = (snippet, { ins, state }) =>
+    // prettier-ignore
+    snippet`
         if (${ins.$1_message}.length) {
-            const ${macros.typedVarMessage('inMessage')} = ${ins.$1_message}.pop()
-            ${state.rightOp} = ${macros.readMessageFloatDatum('inMessage', 0)}
+            ${state.rightOp} = msg_readFloatDatum(${ins.$1_message}.pop(), 0)
         }
-        ${outs.$0} = ${ins.$0} ${operator} ${state.rightOp}
     `
+
+const addSnippet: NodeCodeSnippet<{ rightOp: string }> = (snippet, { ins, outs, rightOp }) =>
+    snippet`${outs.$0} = ${ins.$0} + ${rightOp}`
+
+const multSnippet: NodeCodeSnippet<{ rightOp: string }> = (snippet, { ins, outs, rightOp }) =>
+    snippet`${outs.$0} = ${ins.$0} * ${rightOp}`
 
 // ------------------------------------------------------------------- //
 export const stateVariables: BinopTildeNodeImplementation['stateVariables'] = [
@@ -100,18 +86,22 @@ export const stateVariables: BinopTildeNodeImplementation['stateVariables'] = [
 const _hasSignalInput = (node: DspGraph.Node) =>
     node.sources['1_signal'] && node.sources['1_signal'].length
 
+const snippets = { declareMessage, signalInitializeSnippet, messageInitializeSnippet, loopMessageSnippet, addSnippet, multSnippet }
+
 const binopTilde: NodeImplementations = {
     '+~': {
         initialize: makeInitialize(0),
         declare: makeDeclare(),
-        loop: makeLoop('+'),
+        loop: makeLoop(addSnippet),
         stateVariables,
+        snippets
     },
     '*~': {
         initialize: makeInitialize(1),
         declare: makeDeclare(),
-        loop: makeLoop('*'),
+        loop: makeLoop(multSnippet),
         stateVariables,
+        snippets
     },
 }
 

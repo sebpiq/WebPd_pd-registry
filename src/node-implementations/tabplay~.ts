@@ -11,10 +11,11 @@
 
 import {
     MSG_DATUM_TYPE_STRING,
-    MSG_DATUM_TYPE_FLOAT,
 } from '@webpd/compiler-js/src/constants'
+import { MSG_DATUM_TYPES_ASSEMBLYSCRIPT } from '@webpd/compiler-js/src/engine-assemblyscript/constants'
 import {
     NodeCodeGenerator,
+    NodeCodeSnippet,
     NodeImplementation,
 } from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
@@ -26,21 +27,25 @@ type TabplayTildeNodeImplementation = NodeImplementation<
     NODE_ARGUMENTS_TYPES['tabplay~']
 >
 
+const ASC_MSG_STRING_TOKEN = MSG_DATUM_TYPES_ASSEMBLYSCRIPT[MSG_DATUM_TYPE_STRING]
+
 // ------------------------------ declare ------------------------------ //
 export const declare: TabplayTildeCodeGenerator = (
     _,
-    { state, ins, globs, macros },
-    {engineVariableNames}
-) => `
-    let ${macros.typedVarFloatArray(state.array)}
-    let ${macros.typedVarString(state.arrayName)}
-    let ${macros.typedVarInt(state.readPosition)}
-    let ${macros.typedVarInt(state.readUntil)}
+    variableNames,
+    { snippet },
+) => snippetDeclare(snippet, variableNames)
 
-    const ${state.funcSetArrayName} = ${macros.functionHeader(macros.typedVarString('arrayName'))} => {
+const snippetDeclare: NodeCodeSnippet = (snippet, { state, ins, globs, types }) => snippet`
+    let ${state.array}: ${types.FloatArrayType} = new ${types.FloatArrayType}(0)
+    let ${state.arrayName}: string = ''
+    let ${state.readPosition}: i32
+    let ${state.readUntil}: i32
+
+    const ${state.funcSetArrayName} = (arrayName: string): void => {
         ${state.arrayName} = arrayName
         if (!${globs.arrays}.has(arrayName)) {
-            ${state.array} = new ${engineVariableNames.types.FloatArrayType}(0)
+            ${state.array} = new ${types.FloatArrayType}(0)
         } else {
             ${state.array} = ${globs.arrays}.get(arrayName)
         }
@@ -48,62 +53,87 @@ export const declare: TabplayTildeCodeGenerator = (
         ${state.readUntil} = ${state.array}.length
     }
 
-    const ${state.funcHandleMessage} = ${macros.functionHeader()} => {
-        let ${macros.typedVarMessage('m')} = ${ins.$0}.shift()
+    const ${state.funcHandleMessage} = (): void => {
+        let m: Message = ${ins.$0}.shift()
         
-        if (${macros.isMessageMatching('m', ['set', MSG_DATUM_TYPE_STRING])}) {
-            ${state.funcSetArrayName}(${macros.readMessageStringDatum('m', 1)})
-            
-        } else if (${macros.isMessageMatching('m', ['bang'])}) {
-            // TODO : REMOVE, bug
-            console.log('BANG ' + ${state.arrayName})
-            ${state.funcSetArrayName}(${state.arrayName})
+        if (msg_getLength(m) === 1) {
+            if (
+                msg_isStringToken(m, 0)
+                && msg_readStringDatum(m, 0) === 'bang'
+            ) {
+                // TODO : REMOVE, bug
+                console.log('BANG ' + ${state.arrayName})
+                ${state.funcSetArrayName}(${state.arrayName})
 
-            ${state.readPosition} = 0
-            ${state.readUntil} = ${state.array}.length
-            
-        } else if (${macros.isMessageMatching('m', [MSG_DATUM_TYPE_FLOAT])}) {
-            ${state.readPosition} = ${macros.castToInt(macros.readMessageFloatDatum('m', 0))}
-            ${state.readUntil} = ${state.array}.length
-    
-        } else if (${macros.isMessageMatching('m', [MSG_DATUM_TYPE_FLOAT, MSG_DATUM_TYPE_FLOAT])}) {
-            ${state.readPosition} = ${macros.castToInt(macros.readMessageFloatDatum('m', 0))}
-            ${state.readUntil} = ${macros.castToInt(`Math.min(
-                ${macros.castToFloat(state.readPosition)} + ${macros.readMessageFloatDatum('m', 1)}, 
-                ${macros.castToFloat(`${state.array}.length`)})`)}
+                ${state.readPosition} = 0
+                ${state.readUntil} = ${state.array}.length
+                return 
 
-        } else {
-            throw new Error("Unexpected message")
+            } else if (msg_isFloatToken(m, 0)) {
+                ${state.readPosition} = i32(msg_readFloatDatum(m, 0))
+                ${state.readUntil} = ${state.array}.length
+                return 
+            }
+        
+        } else if (msg_getLength(m) === 2) {
+            if (
+                msg_isStringToken(m, 0)
+                && msg_readStringDatum(m, 0) === 'set'
+            ) {
+                ${state.funcSetArrayName}(msg_readStringDatum(m, 1))    
+                return
+
+            } else if (
+                msg_isFloatToken(m, 0)
+                && msg_isFloatToken(m, 1)
+            ) {
+                ${state.readPosition} = i32(msg_readFloatDatum(m, 0))
+                ${state.readUntil} = i32(Math.min(
+                    ${types.FloatType}(${state.readPosition}) + msg_readFloatDatum(m, 1), 
+                    ${types.FloatType}(${state.array}.length)
+                ))
+                return
+            }
         }
+        throw new Error("Unexpected message")
     }
 `
 
 // ------------------------------ initialize ------------------------------ //
 export const initialize: TabplayTildeCodeGenerator = (
     node,
-    { state, ins, macros },
-    { engineVariableNames }
-) => `
-    ${state.array} = new ${engineVariableNames.types.FloatArrayType}(0)
-    ${state.arrayName} = ''
+    variableNames,
+    { snippet },
+) => snippetInitialize(snippet, {...variableNames, arrayName: node.args.arrayName})
+
+const snippetInitialize: NodeCodeSnippet<{arrayName: string}> = (snippet, { state, ins, types, arrayName }) => snippet`
+    ${state.array} = new ${types.FloatArrayType}(0)
+    ${state.arrayName} = "${arrayName}"
     ${state.readPosition} = 0
     ${state.readUntil} = 0
 
-    ${
-        node.args.arrayName
-            ? `{
-        ${macros.createMessage('m', ['set', node.args.arrayName as string])}
+    if (${state.arrayName}.length) {
+        const m: Message = msg_create([
+            ${ASC_MSG_STRING_TOKEN}, 3,
+            ${ASC_MSG_STRING_TOKEN}, ${state.arrayName}.length
+        ])
+        msg_writeStringDatum(m, 0, 'set')
+        msg_writeStringDatum(m, 1, ${state.arrayName})
         ${ins.$0}.push(m)
-    }`
-            : ''
     }
 `
 
 // ------------------------------- loop ------------------------------ //
 export const loop: TabplayTildeCodeGenerator = (
     _,
-    { state, ins, outs, macros }
-) => `
+    variableNames,
+    { snippet },
+) => snippetLoop(snippet, variableNames)
+
+export const snippetLoop: NodeCodeSnippet = (
+    snippet,
+    { state, ins, outs },
+) => snippet`
     while (${ins.$0}.length) {
         ${state.funcHandleMessage}()
     }
@@ -112,7 +142,10 @@ export const loop: TabplayTildeCodeGenerator = (
         ${outs.$0} = ${state.array}[${state.readPosition}]
         ${state.readPosition}++
         if (${state.readPosition} >= ${state.readUntil}) {
-            ${macros.createMessage('m', ['bang'])}
+            const m: Message = msg_create([
+                ${ASC_MSG_STRING_TOKEN}, 4
+            ])
+            msg_writeStringDatum(m, 0, 'bang')
             ${outs.$1}.push(m)
         }
     } else {
@@ -131,3 +164,5 @@ export const stateVariables: TabplayTildeNodeImplementation['stateVariables'] =
         'funcPlay',
         'funcHandleMessage',
     ]
+
+export const snippets = { snippetDeclare, snippetInitialize, snippetLoop }

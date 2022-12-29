@@ -10,6 +10,7 @@
  */
 
 import {
+    NodeCodeSnippet,
     NodeCodeGenerator,
     NodeImplementation,
 } from '@webpd/compiler-js/src/types'
@@ -22,86 +23,75 @@ type OscTildeNodeImplementation = NodeImplementation<
 >
 
 // ------------------------------ declare ------------------------------ //
-export const declare: OscTildeCodeGenerator = (...args) => {
-    const [node] = args
+export const declare: OscTildeCodeGenerator = (node, variableNames, {snippet}) => {
     return _hasSignalInput(node)
-        ? declareSignal(...args)
-        : declareMessage(...args)
+        ? declareSignal(snippet, variableNames)
+        : declareMessage(snippet, variableNames)
 }
 
-const declareSignal: OscTildeCodeGenerator = (_, { state, macros }) => `
-    let ${macros.typedVarFloat(state.phase)}
-    let ${macros.typedVarFloat(state.J)}
+const declareSignal: NodeCodeSnippet = (snippet, { state, types }) => snippet`
+    let ${state.phase}: ${types.FloatType}
+    let ${state.J}: ${types.FloatType}
 `
 
-const declareMessage: OscTildeCodeGenerator = (_, { state, globs, macros }) => `
-    let ${macros.typedVarFloat(state.phase)}
-    let ${macros.typedVarFloat(state.currentFrequency)}
-    let ${macros.typedVarFloat(state.K)}
-    const ${state.refreshK} = ${macros.functionHeader()} => 
-        ${state.K} = ${state.currentFrequency} * 2 * Math.PI / ${
-    globs.sampleRate
-}
+const declareMessage: NodeCodeSnippet = (snippet, { state, globs, types }) => snippet`
+    let ${state.phase}: ${types.FloatType}
+    let ${state.currentFrequency}: ${types.FloatType}
+    let ${state.K}: ${types.FloatType}
+    const ${state.refreshK} = (): void => 
+        ${state.K} = ${state.currentFrequency} * 2 * Math.PI / ${globs.sampleRate}
 `
 
 // ------------------------------ initialize ------------------------------ //
-export const initialize: OscTildeCodeGenerator = (...args) => {
-    const [node] = args
+export const initialize: OscTildeCodeGenerator = (node, variableNames, {snippet}) => {
+    const frequency = (node.args.frequency || 0).toString()
     return _hasSignalInput(node)
-        ? initializeSignal(...args)
-        : initializeMessage(...args)
+        ? initializeSignal(snippet, {...variableNames, frequency})
+        : initializeMessage(snippet, {...variableNames, frequency})
 }
 
-const initializeSignal: OscTildeCodeGenerator = (
-    node,
-    { ins, state, globs }
-) => `
+const initializeSignal: NodeCodeSnippet<{frequency: string}> = (
+    snippet,
+    { ins, state, globs, frequency },
+) => snippet`
     ${state.phase} = 0
     ${state.J} = 2 * Math.PI / ${globs.sampleRate}
-    ${ins.$0_signal} = ${node.args.frequency || 0}
+    ${ins.$0_signal} = ${frequency}
 `
 
-const initializeMessage: OscTildeCodeGenerator = (node, { state }) => `
+const initializeMessage: NodeCodeSnippet<{frequency: string}> = (snippet, { state, frequency }) => snippet`
     ${state.phase} = 0
-    ${state.currentFrequency} = ${(node.args.frequency as number) || 0}
+    ${state.currentFrequency} = ${frequency}
     ${state.K} = 0
     ${state.refreshK}()
 `
 
 // ------------------------------- loop ------------------------------ //
-export const loop: OscTildeCodeGenerator = (...args) => {
-    const [node] = args
-    return _hasSignalInput(node) ? loopSignal(...args) : loopMessage(...args)
+export const loop: OscTildeCodeGenerator = (node, variableNames, {snippet}) => {
+    return _hasSignalInput(node) 
+        ? loopSignal(snippet, variableNames) 
+        : loopMessage(snippet, variableNames)
 }
 
-const loopSignal: OscTildeCodeGenerator = (_, { state, ins, outs, macros }) => `
+const loopSignal: NodeCodeSnippet = (snippet, { state, ins, outs }) => snippet`
     if (${ins.$1}.length) {
-        const ${macros.typedVarMessage('m')} = ${ins.$1}.pop()
-        ${state.phase} = ${macros.readMessageFloatDatum(
-    'm',
-    0
-)} % 1.0 * 2 * Math.PI
+        ${state.phase} = msg_readFloatDatum(${ins.$1}.pop(), 0) % 1.0 * 2 * Math.PI
     }
     ${outs.$0} = Math.cos(${state.phase})
     ${state.phase} += ${state.J} * ${ins.$0_signal}
 `
 
 // Take only the last received frequency message (first in the list)
-const loopMessage: OscTildeCodeGenerator = (
-    _,
-    { state, ins, outs, macros }
-) => `
+const loopMessage: NodeCodeSnippet = (
+    snippet,
+    { state, ins, outs },
+) => snippet`
     if (${ins.$0_message}.length) {
-        const ${macros.typedVarMessage('m')} = ${ins.$0_message}.pop()
-        ${state.currentFrequency} = ${macros.readMessageFloatDatum('m', 0)}
+        ${state.currentFrequency} = msg_readFloatDatum(${ins.$0_message}.pop(), 0)
         ${state.refreshK}()
     }
     if (${ins.$1}.length) {
-        const ${macros.typedVarMessage('m')} = ${ins.$1}.pop()
-        ${state.phase} = ${macros.readMessageFloatDatum(
-    'm',
-    0
-)} % 1.0 * 2 * Math.PI
+        ${state.phase} = msg_readFloatDatum(${ins.$1}.pop(), 0) % 1.0 * 2 * Math.PI
     }
     ${outs.$0} = Math.cos(${state.phase})
     ${state.phase} += ${state.K}
@@ -118,3 +108,7 @@ export const stateVariables: OscTildeNodeImplementation['stateVariables'] = [
 
 const _hasSignalInput = (node: DspGraph.Node) =>
     node.sources['0_signal'] && node.sources['0_signal'].length
+
+export const snippets = {
+    declareSignal, declareMessage, initializeSignal, initializeMessage, loopSignal, loopMessage
+}

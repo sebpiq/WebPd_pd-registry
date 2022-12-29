@@ -18,8 +18,8 @@ type DacTildeCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['dac~']>
 // TODO : set message not supported
 export const loop: DacTildeCodeGenerator = (
     node,
-    { ins, macros },
-    { audioSettings }
+    { ins, globs },
+    { audioSettings, target }
 ) => {
     let loopStr = ''
     const defaultChannelMapping: Array<number> = []
@@ -35,7 +35,11 @@ export const loop: DacTildeCodeGenerator = (
         if (destination < 0 || audioSettings.channelCount.out <= destination) {
             continue
         }
-        loopStr += `\n${macros.fillInLoopOutput(destination, ins[`${i}`])}`
+        if (target === 'javascript') {
+            loopStr += `\n${globs.output}[${destination}][${globs.iterFrame}] = ${ins[`${i}`]}`
+        } else {
+            loopStr += `\n${globs.output}[${globs.iterFrame} + ${globs.blockSize} * ${destination}] = ${ins[`${i}`]}`
+        }
     }
-    return loopStr
+    return loopStr + '\n'
 }
