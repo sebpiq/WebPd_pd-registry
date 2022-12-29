@@ -9,7 +9,7 @@
  *
  */
 
-import { NodeCodeGenerator, NodeCodeSnippet } from '@webpd/compiler-js/src/types'
+import { NodeCodeGenerator } from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type NoiseTildeCodeGenerator = NodeCodeGenerator<
@@ -18,13 +18,6 @@ type NoiseTildeCodeGenerator = NodeCodeGenerator<
 
 // TODO : left inlet ?
 // ------------------------------- loop ------------------------------ //
-export const loop: NoiseTildeCodeGenerator = (_, variableNames, { snippet }) => 
-    loopSnippet(snippet, variableNames)
-
-const loopSnippet: NodeCodeSnippet = (snippet, { outs, types }) =>
-    snippet`
-        ${outs.$0} = ${types.FloatType}(Math.random() * 2 - 1)
-    `
-
-// ------------------------------------------------------------------- //
-export const snippets = { loopSnippet }
+export const loop: NoiseTildeCodeGenerator = (_, { outs, types }) => `
+    ${outs.$0} = ${types.FloatType}(Math.random() * 2 - 1)
+`

@@ -13,7 +13,6 @@ import { MSG_DATUM_TYPE_STRING } from '@webpd/compiler-js/src/constants'
 import { MSG_DATUM_TYPES_ASSEMBLYSCRIPT } from '@webpd/compiler-js/src/engine-assemblyscript/constants'
 import {
     NodeCodeGenerator,
-    NodeCodeSnippet,
     NodeImplementation,
 } from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
@@ -24,22 +23,23 @@ type MetroNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['metro']>
 const ASC_MSG_STRING_TOKEN = MSG_DATUM_TYPES_ASSEMBLYSCRIPT[MSG_DATUM_TYPE_STRING]
 
 // ------------------------------ declare ------------------------------ //
-export const declare: MetroCodeGenerator = (_, variableNames, { snippet }) => declareSnippet(snippet, variableNames)
-
-const declareSnippet: NodeCodeSnippet = (snippet, {state, types, globs, ins }) => 
+export const declare: MetroCodeGenerator = (node, { state, globs, macros, types }) => 
     // TODO : more complex ways to set rate
     // Time units are all expressed in frames here
-    snippet`
-        let ${state.rate}: ${types.FloatType}
-        let ${state.nextTick}: i32
-        let ${state.realNextTick}: ${types.FloatType}
+    `
+        let ${macros.typedVar(state.rate, 'Float')} = 0
+        let ${macros.typedVar(state.nextTick, 'Int')} = -1
+        let ${macros.typedVar(state.realNextTick, 'Float')} = -1
 
-        const ${state.funcSetRate} = (rate: ${types.FloatType}): void => {
+        const ${state.funcSetRate} = ${macros.typedFuncHeader([
+            macros.typedVar('rate', 'Float')
+        ], 'void')} => {
             ${state.rate} = rate / 1000 * ${globs.sampleRate}
         }
 
-        const ${state.funcHandleMessage0} = (): void => {
-            let m = ${ins.$0}.shift()
+        const ${state.funcHandleMessage0} = ${macros.typedFuncHeader([
+            macros.typedVar('m', 'Message')
+        ], 'void')} => {
             if (msg_getLength(m) === 1) {
                 if (
                     (msg_isFloatToken(m, 0) && msg_readFloatDatum(m, 0) === 0)
@@ -61,8 +61,9 @@ const declareSnippet: NodeCodeSnippet = (snippet, {state, types, globs, ins }) =
             throw new Error("Unexpected message")
         }
 
-        const ${state.funcHandleMessage1} = (): void => {
-            let m = ${ins.$1}.shift()
+        const ${state.funcHandleMessage1} = ${macros.typedFuncHeader([
+            macros.typedVar('m', 'Message')
+        ], 'void')} => {
             if (msg_getLength(m) === 1 && msg_isFloatToken(m, 0)) {
                 ${state.funcSetRate}(msg_readFloatDatum(m, 0))
                 
@@ -72,43 +73,28 @@ const declareSnippet: NodeCodeSnippet = (snippet, {state, types, globs, ins }) =
         }
     `
 
-
 // ------------------------------ initialize ------------------------------ //
-export const initialize: MetroCodeGenerator = (node, variableNames, { snippet }) => {
-    const rate = node.args.rate === undefined ? -1 : node.args.rate
-    return initializeSnippet(snippet, {...variableNames, rate: rate.toString()})
-}
-
-const initializeSnippet: NodeCodeSnippet<{rate: string}> = (snippet, { state, rate }) =>
-    snippet`
-        ${state.rate} = 0
-        ${state.nextTick} = -1
-        ${state.realNextTick} = -1
-        if (${rate} > 0) {
-            ${state.funcSetRate}(${rate})
-        }
-    `
+export const initialize: MetroCodeGenerator = (node, {state}) => `
+    ${node.args.rate !== undefined ? 
+        `${state.funcSetRate}(${node.args.rate})`: ''}
+`
 
 // ------------------------------- loop ------------------------------ //
-export const loop: MetroCodeGenerator = (_, variableNames, { snippet }) => 
-    loopSnippet(snippet, variableNames)
-
-const loopSnippet: NodeCodeSnippet = (snippet, { state, ins, outs, globs  }) =>
-    snippet`
-        while (${ins.$1}.length) {
-            ${state.funcHandleMessage1}()
-        }
-        while (${ins.$0}.length) {
-            ${state.funcHandleMessage0}()
-        }
-        if (${globs.frame} === ${state.nextTick}) {
-            const m: Message = msg_create([${ASC_MSG_STRING_TOKEN}, 4])
-            msg_writeStringDatum(m, 0, 'bang')
-            ${outs.$0}.push(m)
-            ${state.realNextTick} = ${state.realNextTick} + ${state.rate}
-            ${state.nextTick} = i32(Math.round(${state.realNextTick}))
-        }
-    `
+export const loop: MetroCodeGenerator = (_, {state, ins, outs, globs, macros}) => `
+    while (${ins.$1}.length) {
+        ${state.funcHandleMessage1}(${ins.$1}.shift())
+    }
+    while (${ins.$0}.length) {
+        ${state.funcHandleMessage0}(${ins.$0}.shift())
+    }
+    if (${globs.frame} === ${state.nextTick}) {
+        const ${macros.typedVar('m', 'Message')} = msg_create([${ASC_MSG_STRING_TOKEN}, 4])
+        msg_writeStringDatum(m, 0, 'bang')
+        ${outs.$0}.push(m)
+        ${state.realNextTick} = ${state.realNextTick} + ${state.rate}
+        ${state.nextTick} = i32(Math.round(${state.realNextTick}))
+    }
+`
 
 // ------------------------------------------------------------------- //
 export const stateVariables: MetroNodeImplementation['stateVariables'] = [
@@ -119,5 +105,3 @@ export const stateVariables: MetroNodeImplementation['stateVariables'] = [
     'funcHandleMessage0',
     'funcHandleMessage1',
 ]
-
-export const snippets = { declareSnippet, initializeSnippet, loopSnippet }

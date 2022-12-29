@@ -15,7 +15,6 @@ import {
 import { MSG_DATUM_TYPES_ASSEMBLYSCRIPT } from '@webpd/compiler-js/src/engine-assemblyscript/constants'
 import {
     NodeCodeGenerator,
-    NodeCodeSnippet,
     NodeImplementation,
 } from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
@@ -31,18 +30,17 @@ const ASC_MSG_STRING_TOKEN = MSG_DATUM_TYPES_ASSEMBLYSCRIPT[MSG_DATUM_TYPE_STRIN
 
 // ------------------------------ declare ------------------------------ //
 export const declare: TabplayTildeCodeGenerator = (
-    _,
-    variableNames,
-    { snippet },
-) => snippetDeclare(snippet, variableNames)
+    node,
+    {ins, state, types, globs, macros},
+) => `
+    let ${macros.typedVar(state.array, 'FloatArray')} = new ${types.FloatArrayType}(0)
+    let ${macros.typedVar(state.arrayName, 'string')} = "${node.args.arrayName}"
+    let ${macros.typedVar(state.readPosition, 'Int')} = 0
+    let ${macros.typedVar(state.readUntil, 'Int')} = 0
 
-const snippetDeclare: NodeCodeSnippet = (snippet, { state, ins, globs, types }) => snippet`
-    let ${state.array}: ${types.FloatArrayType} = new ${types.FloatArrayType}(0)
-    let ${state.arrayName}: string = ''
-    let ${state.readPosition}: i32
-    let ${state.readUntil}: i32
-
-    const ${state.funcSetArrayName} = (arrayName: string): void => {
+    const ${state.funcSetArrayName} = ${macros.typedFuncHeader([
+        macros.typedVar('arrayName', 'string')
+    ], 'void')} => {
         ${state.arrayName} = arrayName
         if (!${globs.arrays}.has(arrayName)) {
             ${state.array} = new ${types.FloatArrayType}(0)
@@ -53,8 +51,9 @@ const snippetDeclare: NodeCodeSnippet = (snippet, { state, ins, globs, types }) 
         ${state.readUntil} = ${state.array}.length
     }
 
-    const ${state.funcHandleMessage} = (): void => {
-        let m: Message = ${ins.$0}.shift()
+    const ${state.funcHandleMessage0} = ${macros.typedFuncHeader([
+        macros.typedVar('m', 'Message')
+    ], 'void')} => {
         
         if (msg_getLength(m) === 1) {
             if (
@@ -99,21 +98,13 @@ const snippetDeclare: NodeCodeSnippet = (snippet, { state, ins, globs, types }) 
     }
 `
 
-// ------------------------------ initialize ------------------------------ //
+// ------------------------------- initialize ------------------------------ //
 export const initialize: TabplayTildeCodeGenerator = (
-    node,
-    variableNames,
-    { snippet },
-) => snippetInitialize(snippet, {...variableNames, arrayName: node.args.arrayName})
-
-const snippetInitialize: NodeCodeSnippet<{arrayName: string}> = (snippet, { state, ins, types, arrayName }) => snippet`
-    ${state.array} = new ${types.FloatArrayType}(0)
-    ${state.arrayName} = "${arrayName}"
-    ${state.readPosition} = 0
-    ${state.readUntil} = 0
-
+    _,
+    {ins, state, macros},
+) => `
     if (${state.arrayName}.length) {
-        const m: Message = msg_create([
+        const ${macros.typedVar('m', 'Message')} = msg_create([
             ${ASC_MSG_STRING_TOKEN}, 3,
             ${ASC_MSG_STRING_TOKEN}, ${state.arrayName}.length
         ])
@@ -126,23 +117,17 @@ const snippetInitialize: NodeCodeSnippet<{arrayName: string}> = (snippet, { stat
 // ------------------------------- loop ------------------------------ //
 export const loop: TabplayTildeCodeGenerator = (
     _,
-    variableNames,
-    { snippet },
-) => snippetLoop(snippet, variableNames)
-
-export const snippetLoop: NodeCodeSnippet = (
-    snippet,
-    { state, ins, outs },
-) => snippet`
+    {ins, state, outs, macros},
+) => `
     while (${ins.$0}.length) {
-        ${state.funcHandleMessage}()
+        ${state.funcHandleMessage0}(${ins.$0}.shift())
     }
 
     if (${state.readPosition} < ${state.readUntil}) {
         ${outs.$0} = ${state.array}[${state.readPosition}]
         ${state.readPosition}++
         if (${state.readPosition} >= ${state.readUntil}) {
-            const m: Message = msg_create([
+            const ${macros.typedVar('m', 'Message')} = msg_create([
                 ${ASC_MSG_STRING_TOKEN}, 4
             ])
             msg_writeStringDatum(m, 0, 'bang')
@@ -162,7 +147,5 @@ export const stateVariables: TabplayTildeNodeImplementation['stateVariables'] =
         'readUntil',
         'funcSetArrayName',
         'funcPlay',
-        'funcHandleMessage',
+        'funcHandleMessage0',
     ]
-
-export const snippets = { snippetDeclare, snippetInitialize, snippetLoop }

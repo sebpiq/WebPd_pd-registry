@@ -9,7 +9,7 @@
  *
  */
 
-import { NodeCodeGenerator, NodeCodeSnippet } from '@webpd/compiler-js/src/types'
+import { NodeCodeGenerator } from '@webpd/compiler-js/src/types'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type AdcTildeCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['adc~']>
@@ -18,11 +18,10 @@ type AdcTildeCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['adc~']>
 // TODO : set message not supported
 export const loop: AdcTildeCodeGenerator = (
     node,
-    variableNames,
-    { audioSettings, snippet }
+    {outs, globs},
+    { audioSettings, target }
 ) => {
     let loopStr = ''
-    const {outs} = variableNames
     const defaultChannelMapping: Array<number> = []
     for (let channel = 0; channel < audioSettings.channelCount.in; channel++) {
         defaultChannelMapping.push(channel)
@@ -36,16 +35,11 @@ export const loop: AdcTildeCodeGenerator = (
         if (source < 0 || audioSettings.channelCount.in <= source) {
             continue
         }
-        loopStr += loopSingleChannel(snippet, {...variableNames, source: source.toString(), destName: outs[`${i}`]}, )
+        if (target === 'javascript') {
+            loopStr += `\n${outs[`${i}`]} = ${globs.input}[${source}][${globs.iterFrame}]`
+        } else {
+            loopStr += `\n${outs[`${i}`]} = ${globs.input}[${globs.iterFrame} + ${globs.blockSize} * ${source}]`
+        }
     }
-    return loopStr
+    return loopStr + '\n'
 }
-
-const loopSingleChannel: NodeCodeSnippet<{source: string, destName: string}> = (
-    snippet,
-    { globs, destName, source },
-) => snippet`
-    ${destName} = ${globs.input}[${globs.iterFrame} + ${globs.blockSize} * ${source}]
-`
-
-export const snippets = { loopSingleChannel }

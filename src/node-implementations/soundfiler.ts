@@ -20,11 +20,11 @@ type SoundfilerNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['_NO
 
 // ------------------------------ declare ------------------------------ //
 export const declare: SoundfilerCodeGenerator = (_, {macros, state, globs}) => `
-    let ${macros.typedVarStringArray(state.arrayNames)} = []
+    let ${macros.typedVar(state.arrayNames, 'Array<string>')} = []
 
-    const ${state.funcHandleMessage0} = ${macros.functionHeader(
-        macros.typedVarMessage('m')
-    )} => {
+    const ${state.funcHandleMessage0} = ${macros.typedFuncHeader([
+        macros.typedVar('m', 'Message')
+    ], 'void')} => {
         if (msg_getLength(m) >= 3) {
             if (msg_readStringDatum(m, 0) === 'read) {
                 const stringsIndexes: Array<number> = []
@@ -35,10 +35,10 @@ export const declare: SoundfilerCodeGenerator = (_, {macros, state, globs}) => `
                         stringsValues.push(msg_readStringDatum(m, i))
                     }
                 }
-                let ${macros.typedVarString('url')} = ''
+                let ${macros.typedVar('url', 'string')} = ''
                 for (let i = 0; i < stringsIndexes.length; i++) {
-                    let ${macros.typedVarString('sIndex')} = stringsIndexes[i]
-                    let ${macros.typedVarString('sValue')} = stringsValues[i]
+                    let ${macros.typedVar('sIndex', 'string')} = stringsIndexes[i]
+                    let ${macros.typedVar('sValue', 'string')} = stringsValues[i]
                     if (sValue.includes('/') || sValue.includes('.')) {
                         url = sValue
                         ${state.arrayNames} = []
@@ -47,8 +47,8 @@ export const declare: SoundfilerCodeGenerator = (_, {macros, state, globs}) => `
                     }
                 }
     
-                fs_readSoundFile(url, (id: fs_OperationId, status: fs_OperationStatus, sound: TypedArray[]) => {
-                    const ${macros.typedVarInt('channelCount')} = i32(Math.min(${state.arrayNames}.length, sound.length))
+                fs_readSoundFile(url, (id: fs_OperationId, status: fs_OperationStatus, sound: FloatArray[]) => {
+                    const ${macros.typedVar('channelCount', 'Int')} = i32(Math.min(${state.arrayNames}.length, sound.length))
                     for (let channel = 0; channel < channelCount; channel++) {
                         ${globs.arrays}.set(${state.arrayNames}[channel], sound[channel])
                     }
