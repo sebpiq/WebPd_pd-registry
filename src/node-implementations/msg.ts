@@ -9,9 +9,9 @@
  *
  */
 
-import { buildMessageTransferOperations } from '@webpd/compiler-js/src/compile-helpers'
 import { Code, NodeCodeGenerator } from '@webpd/compiler-js/src/types'
 import { DspGraph } from '@webpd/dsp-graph'
+import { buildMessageTransferOperations } from '@webpd/compiler-js'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type MsgCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['msg']>

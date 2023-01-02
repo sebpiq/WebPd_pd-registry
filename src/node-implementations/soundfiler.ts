@@ -26,8 +26,8 @@ export const declare: SoundfilerCodeGenerator = (_, {macros, state, types, globs
         macros.typedVar('m', 'Message')
     ], 'void')} => {
         if (msg_getLength(m) >= 3) {
-            if (msg_readStringToken(m, 0) === 'read) {
-                const stringsIndexes: Array<number> = []
+            if (msg_readStringToken(m, 0) === 'read') {
+                const stringsIndexes: Array<Int> = []
                 const stringsValues: Array<string> = []
                 for (let i = 1; i < msg_getLength(m); i++) {
                     if (msg_isStringToken(m, i)) {
@@ -37,7 +37,7 @@ export const declare: SoundfilerCodeGenerator = (_, {macros, state, types, globs
                 }
                 let ${macros.typedVar('url', 'string')} = ''
                 for (let i = 0; i < stringsIndexes.length; i++) {
-                    let ${macros.typedVar('sIndex', 'string')} = stringsIndexes[i]
+                    let ${macros.typedVar('sIndex', 'Int')} = stringsIndexes[i]
                     let ${macros.typedVar('sValue', 'string')} = stringsValues[i]
                     if (sValue.includes('/') || sValue.includes('.')) {
                         url = sValue
@@ -47,6 +47,7 @@ export const declare: SoundfilerCodeGenerator = (_, {macros, state, types, globs
                     }
                 }
     
+                console.log('[soundfiler] READ ' + url)
                 fs_readSoundFile(url, (id: fs_OperationId, status: fs_OperationStatus, sound: FloatArray[]) => {
                     const ${macros.typedVar('channelCount', 'Int')} = ${types.Int}(Math.min(${state.arrayNames}.length, sound.length))
                     for (let channel = 0; channel < channelCount; channel++) {
