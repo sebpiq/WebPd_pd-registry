@@ -33,8 +33,7 @@
     "@webpd/pd-json": "file:../WebPd_pd-json",
     "jest": "^28.1.0",
     "rollup": "^2.74.1",
-    "ts-jest": "^28.0.3",
-    "ts-node": "^10.9.1"
+    "ts-jest": "^28.0.3"
   },
   "dependencies": {
     "@webpd/dsp-graph": "file:../WebPd_dsp-graph"

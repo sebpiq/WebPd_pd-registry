@@ -10,14 +10,19 @@
  */
 
 import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
+import { CompilerTarget } from '@webpd/compiler-js/src/types'
 import NODE_IMPLEMENTATIONS from '.'
 import NODE_BUILDERS from '../node-builders'
 import { buildNode } from './test-helpers'
 
 describe('tabplay~', () => {
-    it('should change array when sent set', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should change array when sent set %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['tabplay~'], 'tabplay~', {
                     arrayName: 'UNKNOWN_ARRAY',
                 }),
@@ -45,9 +50,13 @@ describe('tabplay~', () => {
         )
     })
 
-    it('should read from beginning to end when receiving bang', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should read from beginning to end when receiving bang %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['tabplay~'], 'tabplay~', {
                     arrayName: 'myArray',
                 }),
@@ -76,9 +85,13 @@ describe('tabplay~', () => {
         )
     })
 
-    it('should read from sample when receiving float', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should read from sample when receiving float %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['tabplay~'], 'tabplay~', {
                     arrayName: 'myArray',
                 }),
@@ -109,9 +122,13 @@ describe('tabplay~', () => {
         )
     })
 
-    it('should read from sample to sample when receiving 2 floats', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should read from sample to sample when receiving 2 floats %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['tabplay~'], 'tabplay~', {
                     arrayName: 'myArray',
                 }),

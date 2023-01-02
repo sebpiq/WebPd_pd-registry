@@ -10,6 +10,7 @@
  */
 
 import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
+import { CompilerTarget } from '@webpd/compiler-js/src/types'
 import NODE_IMPLEMENTATIONS from '.'
 import NODE_BUILDERS from '../node-builders'
 import { buildNode } from './test-helpers'
@@ -17,9 +18,13 @@ import { buildNode } from './test-helpers'
 const SAMPLE_RATE = nodeImplementationsTestHelpers.ENGINE_DSP_PARAMS.sampleRate
 
 describe('metro', () => {
-    it('should start metro at rate passed as arg', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should start metro at rate passed as arg %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['metro'], 'metro', {
                     rate: (2 * 1000) / SAMPLE_RATE,
                 }),
@@ -45,9 +50,13 @@ describe('metro', () => {
         )
     })
 
-    it('should start metro when sent 1', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should start metro when sent 1 %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['metro'], 'metro', {
                     rate: (1 * 1000) / SAMPLE_RATE,
                 }),
@@ -64,9 +73,13 @@ describe('metro', () => {
         )
     })
 
-    it('should start metro at rate passed to inlet 1', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should start metro at rate passed to inlet 1 %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['metro'], 'metro', {
                     rate: (2 * 1000) / SAMPLE_RATE,
                 }),
@@ -95,9 +108,13 @@ describe('metro', () => {
         )
     })
 
-    it('should stop metro when receiving stop', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should stop metro when receiving stop %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['metro'], 'metro', {
                     rate: (1 * 1000) / SAMPLE_RATE,
                 }),
@@ -118,9 +135,13 @@ describe('metro', () => {
         )
     })
 
-    it('should stop metro when receiving 0', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should stop metro when receiving 0 %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['metro'], 'metro', {
                     rate: (1 * 1000) / SAMPLE_RATE,
                 }),

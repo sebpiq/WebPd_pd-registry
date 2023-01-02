@@ -10,14 +10,19 @@
  */
 
 import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
+import { CompilerTarget } from '@webpd/compiler-js/src/types'
 import NODE_IMPLEMENTATIONS from '.'
 import NODE_BUILDERS from '../node-builders'
 import { buildNode } from './test-helpers'
 
 describe('msg', () => {
-    it('should transfer directly messages without dollar strings', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should transfer directly messages without dollar strings %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['msg'], 'msg', {
                     template: [123, 'hello'],
                 }),
@@ -36,9 +41,13 @@ describe('msg', () => {
         )
     })
 
-    it('should substitute entire dollar strings', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should substitute entire dollar strings %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['msg'], 'msg', {
                     template: [123, '$2', '$1'],
                 }),
@@ -63,9 +72,13 @@ describe('msg', () => {
         )
     })
 
-    it('should substitute dollar strings within strings', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should substitute dollar strings within strings %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['msg'], 'msg', {
                     template: ['hello_$2', '$1', 'greetings'],
                 }),

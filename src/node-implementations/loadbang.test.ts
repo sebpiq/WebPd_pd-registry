@@ -10,14 +10,19 @@
  */
 
 import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
+import { CompilerTarget } from '@webpd/compiler-js/src/types'
 import NODE_IMPLEMENTATIONS from '.'
 import NODE_BUILDERS from '../node-builders'
 import { buildNode } from './test-helpers'
 
 describe('loadbang', () => {
-    it('should output a bang on creation', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should output a bang on creation %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['loadbang'], 'loadbang', {}),
                 nodeImplementations: NODE_IMPLEMENTATIONS,
             },

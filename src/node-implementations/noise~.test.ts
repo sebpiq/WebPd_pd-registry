@@ -14,6 +14,7 @@ import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-hel
 import NODE_IMPLEMENTATIONS from '.'
 import NODE_BUILDERS from '../node-builders'
 import { buildNode } from './test-helpers'
+import { CompilerTarget } from '@webpd/compiler-js/src/types'
 
 describe('noise~', () => {
     const testOutputFrames = (
@@ -27,22 +28,18 @@ describe('noise~', () => {
         assert.deepStrictEqual(values.size, 3)
     }
 
-    it('should output white noise', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should output white noise %s', async ({target}) => {
         const nodeTestSettings = {
+            target,
             node: buildNode(NODE_BUILDERS['noise~'], 'noise~', {}),
             nodeImplementations: NODE_IMPLEMENTATIONS,
         }
         const inputFrames = [{}, {}, {}]
         testOutputFrames(
             await nodeImplementationsTestHelpers.generateFramesForNode(
-                'javascript',
-                nodeTestSettings,
-                inputFrames
-            )
-        )
-        testOutputFrames(
-            await nodeImplementationsTestHelpers.generateFramesForNode(
-                'assemblyscript',
                 nodeTestSettings,
                 inputFrames
             )

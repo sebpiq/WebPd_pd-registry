@@ -10,15 +10,20 @@
  */
 
 import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
+import { CompilerTarget } from '@webpd/compiler-js/src/types'
 import NODE_IMPLEMENTATIONS from '.'
 import NODE_BUILDERS from '../node-builders'
 import { buildNode } from './test-helpers'
 
 describe('binop~', () => {
     describe('+~', () => {
-        it('should work with signal as inlet 1', async () => {
+        it.each<{ target: CompilerTarget }>([
+            {target: 'javascript'},
+            {target: 'assemblyscript'},
+        ])('should work with signal as inlet 1 %s', async ({ target }) => {
             await nodeImplementationsTestHelpers.assertNodeOutput(
                 {
+                    target,
                     node: buildNode(NODE_BUILDERS['+~'], '+~', { value: 1 }),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
                     connectedSources: ['1_signal'],
@@ -32,9 +37,13 @@ describe('binop~', () => {
             )
         })
 
-        it('should have default message value 0', async () => {
+        it.each<{ target: CompilerTarget }>([
+            {target: 'javascript'},
+            {target: 'assemblyscript'},
+        ])('should have default message value 0 %s', async ({ target }) => {
             await nodeImplementationsTestHelpers.assertNodeOutput(
                 {
+                    target,
                     node: buildNode(NODE_BUILDERS['+~'], '+~', {}),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
                     connectedSources: ['1_message'],
@@ -44,9 +53,13 @@ describe('binop~', () => {
             )
         })
 
-        it('should work with message messages to inlet 1', async () => {
+        it.each<{ target: CompilerTarget }>([
+            {target: 'javascript'},
+            {target: 'assemblyscript'},
+        ])('should work with message messages to inlet 1 %s', async ({ target }) => {
             await nodeImplementationsTestHelpers.assertNodeOutput(
                 {
+                    target,
                     node: buildNode(NODE_BUILDERS['+~'], '+~', { value: 10 }),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
                     connectedSources: ['1_message'],
@@ -70,9 +83,13 @@ describe('binop~', () => {
     })
 
     describe('*~', () => {
-        it('should work with signal as inlet 1', async () => {
+        it.each<{ target: CompilerTarget }>([
+            {target: 'javascript'},
+            {target: 'assemblyscript'},
+        ])('should work with signal as inlet 1 %s', async ({ target }) => {
             await nodeImplementationsTestHelpers.assertNodeOutput(
                 {
+                    target,
                     node: buildNode(NODE_BUILDERS['*~'], '*~', { value: 1 }),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
                     connectedSources: ['1_signal'],
@@ -86,9 +103,13 @@ describe('binop~', () => {
             )
         })
 
-        it('should have default message value 1', async () => {
+        it.each<{ target: CompilerTarget }>([
+            {target: 'javascript'},
+            {target: 'assemblyscript'},
+        ])('should have default message value 1 %s', async ({ target }) => {
             await nodeImplementationsTestHelpers.assertNodeOutput(
                 {
+                    target,
                     node: buildNode(NODE_BUILDERS['*~'], '*~', {}),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
                     connectedSources: ['1_message'],
@@ -98,9 +119,13 @@ describe('binop~', () => {
             )
         })
 
-        it('should work with messages to inlet 1', async () => {
+        it.each<{ target: CompilerTarget }>([
+            {target: 'javascript'},
+            {target: 'assemblyscript'},
+        ])('should work with messages to inlet 1 %s', async ({ target }) => {
             await nodeImplementationsTestHelpers.assertNodeOutput(
                 {
+                    target,
                     node: buildNode(NODE_BUILDERS['*~'], '*~', { value: 2 }),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
                     connectedSources: ['1_message'],

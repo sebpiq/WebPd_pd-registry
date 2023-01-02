@@ -10,14 +10,19 @@
  */
 
 import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
+import { CompilerTarget } from '@webpd/compiler-js/src/types'
 import NODE_IMPLEMENTATIONS from '.'
 import NODE_BUILDERS from '../node-builders'
 import { buildNode } from './test-helpers'
 
 describe('mixer~', () => {
-    it('should sum incoming signals together', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should sum incoming signals together %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['mixer~'], 'mixer~', {
                     channelCount: 3,
                 }),

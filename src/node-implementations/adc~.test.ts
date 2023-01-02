@@ -13,9 +13,8 @@ import { makeGraph } from '@webpd/dsp-graph/src/test-helpers'
 import NODE_IMPLEMENTATIONS from '.'
 import assert from 'assert'
 import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
-import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
-
-type EngineOutput = Array<Float32Array>
+import { createEngine } from '@webpd/compiler-js/src/test-helpers'
+import { CompilerTarget } from '@webpd/compiler-js/src/types'
 
 describe('adc~', () => {
     const generateFrames = async (
@@ -63,7 +62,7 @@ describe('adc~', () => {
 
         const code =
             nodeImplementationsTestHelpers.executeCompilation(compilation)
-        const engine = await nodeImplementationsTestHelpers.getEngine(
+        const engine = await createEngine(
             compilation.target,
             code
         )
@@ -87,33 +86,31 @@ describe('adc~', () => {
         return engineOutput
     }
 
-    const assertEngineOutputs = async (
-        args: NODE_ARGUMENTS_TYPES['adc~'],
-        expected: EngineOutput
-    ) => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should route the channels according to arguments %s', async ({target}) => {
         assert.deepStrictEqual(
-            await generateFrames('javascript', args),
-            expected
+            await generateFrames(target, { channelMapping: [6, 3, 0] }),
+            [
+                new Float32Array([6.1]),
+                new Float32Array([3.1]),
+                new Float32Array([0.1]),
+            ]
         )
-        assert.deepStrictEqual(
-            await generateFrames('assemblyscript', args),
-            expected
-        )
-    }
-
-    it('should route the channels according to arguments', async () => {
-        await assertEngineOutputs({ channelMapping: [6, 3, 0] }, [
-            new Float32Array([6.1]),
-            new Float32Array([3.1]),
-            new Float32Array([0.1]),
-        ])
     })
 
-    it('should ignore channels that are out of bounds', async () => {
-        await assertEngineOutputs({ channelMapping: [-2, 13, 2] }, [
-            new Float32Array([0]),
-            new Float32Array([0]),
-            new Float32Array([2.1]),
-        ])
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should ignore channels that are out of bounds %s', async ({target}) => {
+        assert.deepStrictEqual(
+            await generateFrames(target, { channelMapping: [-2, 13, 2] }),
+            [
+                new Float32Array([0]),
+                new Float32Array([0]),
+                new Float32Array([2.1]),
+            ]
+        )
     })
 })

@@ -10,12 +10,16 @@
  */
 
 import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
+import { CompilerTarget } from '@webpd/compiler-js/src/types'
 import NODE_IMPLEMENTATIONS from '.'
 import NODE_BUILDERS from '../node-builders'
 import { buildNode } from './test-helpers'
 
 describe('osc~', () => {
-    it('should work with signal frequency', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should work with signal frequency %s', async ({ target }) => {
         const { sampleRate } = nodeImplementationsTestHelpers.ENGINE_DSP_PARAMS
         const frequency1 = 100
         const frequency2 = 200
@@ -23,6 +27,7 @@ describe('osc~', () => {
         const J = (2 * Math.PI) / sampleRate
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['osc~'], 'osc~', {
                     frequency: 0,
                 }),
@@ -48,13 +53,17 @@ describe('osc~', () => {
         )
     })
 
-    it('should work with signal frequency settings phase', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should work with signal frequency settings phase %s', async ({ target }) => {
         const { sampleRate } = nodeImplementationsTestHelpers.ENGINE_DSP_PARAMS
         const frequency = 100
         const J = (2 * Math.PI * frequency) / sampleRate
 
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['osc~'], 'osc~', { frequency }),
                 nodeImplementations: NODE_IMPLEMENTATIONS,
                 connectedSources: ['0_signal'],
@@ -76,7 +85,10 @@ describe('osc~', () => {
         )
     })
 
-    it('should work with message frequency', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should work with message frequency %s', async ({ target }) => {
         const { sampleRate } = nodeImplementationsTestHelpers.ENGINE_DSP_PARAMS
         const frequency1 = 100
         const frequency2 = 300
@@ -84,6 +96,7 @@ describe('osc~', () => {
 
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['osc~'], 'osc~', {
                     frequency: frequency1,
                 }),
@@ -106,13 +119,17 @@ describe('osc~', () => {
         )
     })
 
-    it('should work with message frequency settings phase', async () => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should work with message frequency settings phase %s', async ({ target }) => {
         const { sampleRate } = nodeImplementationsTestHelpers.ENGINE_DSP_PARAMS
         const frequency = 100
         const J = (2 * Math.PI * frequency) / sampleRate
 
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {
+                target,
                 node: buildNode(NODE_BUILDERS['osc~'], 'osc~', { frequency }),
                 nodeImplementations: NODE_IMPLEMENTATIONS,
             },

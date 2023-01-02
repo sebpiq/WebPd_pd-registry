@@ -12,9 +12,9 @@
 import { makeGraph } from '@webpd/dsp-graph/src/test-helpers'
 import NODE_IMPLEMENTATIONS from '.'
 import assert from 'assert'
-import { NodeImplementations } from '@webpd/compiler-js/src/types'
+import { CompilerTarget, NodeImplementations } from '@webpd/compiler-js/src/types'
 import * as nodeImplementationsTestHelpers from '@webpd/compiler-js/src/test-helpers-node-implementations'
-import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
+import { createEngine } from '@webpd/compiler-js/src/test-helpers'
 
 type EngineOutputs = Array<Array<number>>
 
@@ -79,7 +79,7 @@ describe('dac~', () => {
 
         const code =
             nodeImplementationsTestHelpers.executeCompilation(compilation)
-        const engine = await nodeImplementationsTestHelpers.getEngine(
+        const engine = await createEngine(
             compilation.target,
             code
         )
@@ -104,35 +104,33 @@ describe('dac~', () => {
         return results
     }
 
-    const assertEngineOutputs = async (
-        args: NODE_ARGUMENTS_TYPES['dac~'],
-        expected: EngineOutputs
-    ) => {
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should route the channels according to arguments %s', async ({target}) => {
         assert.deepStrictEqual(
-            await generateFrames('javascript', args),
-            expected
+            await generateFrames(target, { channelMapping: [0, 3] }),
+            [
+                [0, 0, 0, 0],
+                [1, 0, 0, 10],
+                [2, 0, 0, 20],
+                [3, 0, 0, 30],
+            ]
         )
-        assert.deepStrictEqual(
-            await generateFrames('assemblyscript', args),
-            expected
-        )
-    }
-
-    it('should route the channels according to arguments', async () => {
-        await assertEngineOutputs({ channelMapping: [0, 3] }, [
-            [0, 0, 0, 0],
-            [1, 0, 0, 10],
-            [2, 0, 0, 20],
-            [3, 0, 0, 30],
-        ])
     })
 
-    it('should ignore channels that are out of bounds', async () => {
-        await assertEngineOutputs({ channelMapping: [-1, 2, 10] }, [
-            [0, 0, 0, 0],
-            [0, 0, 10, 0],
-            [0, 0, 20, 0],
-            [0, 0, 30, 0],
-        ])
+    it.each<{ target: CompilerTarget }>([
+        {target: 'javascript'},
+        {target: 'assemblyscript'},
+    ])('should ignore channels that are out of bounds %s', async ({target}) => {
+        assert.deepStrictEqual(
+            await generateFrames(target, { channelMapping: [-1, 2, 10] }),
+            [
+                [0, 0, 0, 0],
+                [0, 0, 10, 0],
+                [0, 0, 20, 0],
+                [0, 0, 30, 0],
+            ]
+        )
     })
 })
