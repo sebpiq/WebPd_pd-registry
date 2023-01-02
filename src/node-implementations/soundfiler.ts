@@ -26,13 +26,13 @@ export const declare: SoundfilerCodeGenerator = (_, {macros, state, types, globs
         macros.typedVar('m', 'Message')
     ], 'void')} => {
         if (msg_getLength(m) >= 3) {
-            if (msg_readStringDatum(m, 0) === 'read) {
+            if (msg_readStringToken(m, 0) === 'read) {
                 const stringsIndexes: Array<number> = []
                 const stringsValues: Array<string> = []
                 for (let i = 1; i < msg_getLength(m); i++) {
                     if (msg_isStringToken(m, i)) {
                         stringsIndexes.push(i)
-                        stringsValues.push(msg_readStringDatum(m, i))
+                        stringsValues.push(msg_readStringToken(m, i))
                     }
                 }
                 let ${macros.typedVar('url', 'string')} = ''

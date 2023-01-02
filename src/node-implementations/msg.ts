@@ -10,16 +10,11 @@
  */
 
 import { buildMessageTransferOperations } from '@webpd/compiler-js/src/compile-helpers'
-import { MSG_DATUM_TYPE_FLOAT, MSG_DATUM_TYPE_STRING } from '@webpd/compiler-js/src/constants'
-import { MSG_DATUM_TYPES_ASSEMBLYSCRIPT } from '@webpd/compiler-js/src/engine-assemblyscript/constants'
 import { Code, NodeCodeGenerator } from '@webpd/compiler-js/src/types'
 import { DspGraph } from '@webpd/dsp-graph'
 import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type MsgCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['msg']>
-
-const ASC_MSG_STRING_TOKEN = MSG_DATUM_TYPES_ASSEMBLYSCRIPT[MSG_DATUM_TYPE_STRING]
-const ASC_MSG_FLOAT_TOKEN = MSG_DATUM_TYPES_ASSEMBLYSCRIPT[MSG_DATUM_TYPE_FLOAT]
 
 // ------------------------------- loop ------------------------------ //
 export const loop: MsgCodeGenerator = (node, {ins, outs, macros}) => {
@@ -39,56 +34,56 @@ export const loop: MsgCodeGenerator = (node, {ins, outs, macros}) => {
         if (operation.type === 'noop') {
             const { inIndex } = operation
             outTemplateCode += `
-                outTemplate.push(msg_getDatumType(inMessage, ${inIndex}))
+                outTemplate.push(msg_getTokenType(inMessage, ${inIndex}))
                 if (msg_isStringToken(inMessage, ${inIndex})) {
-                    stringMem[${stringMemCount}] = msg_readStringDatum(inMessage, ${inIndex})
+                    stringMem[${stringMemCount}] = msg_readStringToken(inMessage, ${inIndex})
                     outTemplate.push(stringMem[${stringMemCount}].length)
                 }
             `
             outMessageCode += `
                 if (msg_isFloatToken(inMessage, ${inIndex})) {
-                    msg_writeFloatDatum(outMessage, ${outIndex}, msg_readFloatDatum(inMessage, ${inIndex}))
+                    msg_writeFloatToken(outMessage, ${outIndex}, msg_readFloatToken(inMessage, ${inIndex}))
                 } else if (msg_isStringToken(inMessage, ${inIndex})) {
-                    msg_writeStringDatum(outMessage, ${outIndex}, stringMem[${stringMemCount}])
+                    msg_writeStringToken(outMessage, ${outIndex}, stringMem[${stringMemCount}])
                 }
             `
             stringMemCount++
         } else if (operation.type === 'string-template') {
             outTemplateCode += `
-                stringDatum = "${operation.template}"
+                stringToken = "${operation.template}"
                 ${operation.variables.map(({placeholder, inIndex}) => `
                     if (msg_isFloatToken(inMessage, ${inIndex})) {
-                        otherStringDatum = msg_readFloatDatum(inMessage, ${inIndex}).toString()
-                        if (otherStringDatum.endsWith('.0')) {
-                            otherStringDatum = otherStringDatum.slice(0, -2)
+                        otherStringToken = msg_readFloatToken(inMessage, ${inIndex}).toString()
+                        if (otherStringToken.endsWith('.0')) {
+                            otherStringToken = otherStringToken.slice(0, -2)
                         }
-                        stringDatum = stringDatum.replace("${placeholder}", otherStringDatum)
+                        stringToken = stringToken.replace("${placeholder}", otherStringToken)
                     } else if (msg_isStringToken(inMessage, ${inIndex})) {
-                        stringDatum = stringDatum.replace("${placeholder}", msg_readStringDatum(inMessage, ${inIndex}))
+                        stringToken = stringToken.replace("${placeholder}", msg_readStringToken(inMessage, ${inIndex}))
                     }`
                 )}
-                stringMem[${stringMemCount}] = stringDatum
-                outTemplate.push(${ASC_MSG_STRING_TOKEN})
-                outTemplate.push(stringDatum.length)
+                stringMem[${stringMemCount}] = stringToken
+                outTemplate.push(MSG_TOKEN_TYPE_STRING)
+                outTemplate.push(stringToken.length)
             `
             outMessageCode += `
-                msg_writeStringDatum(outMessage, ${outIndex}, stringMem[${stringMemCount}])
+                msg_writeStringToken(outMessage, ${outIndex}, stringMem[${stringMemCount}])
             `
             stringMemCount++
         } else if (operation.type === 'string-constant') {
             outTemplateCode += `
-                outTemplate.push(${ASC_MSG_STRING_TOKEN})
+                outTemplate.push(MSG_TOKEN_TYPE_STRING)
                 outTemplate.push(${operation.value.length})
             `
             outMessageCode += `
-                msg_writeStringDatum(outMessage, ${outIndex}, "${operation.value}")
+                msg_writeStringToken(outMessage, ${outIndex}, "${operation.value}")
             `
         } else if (operation.type === 'float-constant') {
             outTemplateCode += `
-                outTemplate.push(${ASC_MSG_FLOAT_TOKEN})
+                outTemplate.push(MSG_TOKEN_TYPE_FLOAT)
             `
             outMessageCode += `
-                msg_writeFloatDatum(outMessage, ${outIndex}, ${operation.value})
+                msg_writeFloatToken(outMessage, ${outIndex}, ${operation.value})
             `
         }
     })
@@ -96,8 +91,8 @@ export const loop: MsgCodeGenerator = (node, {ins, outs, macros}) => {
     return `
         while (${ins.$0}.length) {
             const ${macros.typedVar('inMessage', 'Message')} = ${ins.$0}.shift()
-            let ${macros.typedVar('stringDatum', 'string')}
-            let ${macros.typedVar('otherStringDatum', 'string')}
+            let ${macros.typedVar('stringToken', 'string')}
+            let ${macros.typedVar('otherStringToken', 'string')}
             const ${macros.typedVar('stringMem', 'Array<string>')} = []
 
             const ${macros.typedVar('outTemplate', 'MessageTemplate')} = []

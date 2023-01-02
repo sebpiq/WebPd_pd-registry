@@ -10,10 +10,6 @@
  */
 
 import {
-    MSG_DATUM_TYPE_STRING,
-} from '@webpd/compiler-js/src/constants'
-import { MSG_DATUM_TYPES_ASSEMBLYSCRIPT } from '@webpd/compiler-js/src/engine-assemblyscript/constants'
-import {
     NodeCodeGenerator,
     NodeImplementation,
 } from '@webpd/compiler-js/src/types'
@@ -25,8 +21,6 @@ type TabplayTildeCodeGenerator = NodeCodeGenerator<
 type TabplayTildeNodeImplementation = NodeImplementation<
     NODE_ARGUMENTS_TYPES['tabplay~']
 >
-
-const ASC_MSG_STRING_TOKEN = MSG_DATUM_TYPES_ASSEMBLYSCRIPT[MSG_DATUM_TYPE_STRING]
 
 // ------------------------------ declare ------------------------------ //
 export const declare: TabplayTildeCodeGenerator = (
@@ -58,7 +52,7 @@ export const declare: TabplayTildeCodeGenerator = (
         if (msg_getLength(m) === 1) {
             if (
                 msg_isStringToken(m, 0)
-                && msg_readStringDatum(m, 0) === 'bang'
+                && msg_readStringToken(m, 0) === 'bang'
             ) {
                 // TODO : REMOVE, bug
                 console.log('BANG ' + ${state.arrayName})
@@ -69,7 +63,7 @@ export const declare: TabplayTildeCodeGenerator = (
                 return 
 
             } else if (msg_isFloatToken(m, 0)) {
-                ${state.readPosition} = ${types.Int}(msg_readFloatDatum(m, 0))
+                ${state.readPosition} = ${types.Int}(msg_readFloatToken(m, 0))
                 ${state.readUntil} = ${state.array}.length
                 return 
             }
@@ -77,18 +71,18 @@ export const declare: TabplayTildeCodeGenerator = (
         } else if (msg_getLength(m) === 2) {
             if (
                 msg_isStringToken(m, 0)
-                && msg_readStringDatum(m, 0) === 'set'
+                && msg_readStringToken(m, 0) === 'set'
             ) {
-                ${state.funcSetArrayName}(msg_readStringDatum(m, 1))    
+                ${state.funcSetArrayName}(msg_readStringToken(m, 1))    
                 return
 
             } else if (
                 msg_isFloatToken(m, 0)
                 && msg_isFloatToken(m, 1)
             ) {
-                ${state.readPosition} = ${types.Int}(msg_readFloatDatum(m, 0))
+                ${state.readPosition} = ${types.Int}(msg_readFloatToken(m, 0))
                 ${state.readUntil} = ${types.Int}(Math.min(
-                    ${types.Float}(${state.readPosition}) + msg_readFloatDatum(m, 1), 
+                    ${types.Float}(${state.readPosition}) + msg_readFloatToken(m, 1), 
                     ${types.Float}(${state.array}.length)
                 ))
                 return
@@ -105,11 +99,11 @@ export const initialize: TabplayTildeCodeGenerator = (
 ) => `
     if (${state.arrayName}.length) {
         const ${macros.typedVar('m', 'Message')} = msg_create([
-            ${ASC_MSG_STRING_TOKEN}, 3,
-            ${ASC_MSG_STRING_TOKEN}, ${state.arrayName}.length
+            MSG_TOKEN_TYPE_STRING, 3,
+            MSG_TOKEN_TYPE_STRING, ${state.arrayName}.length
         ])
-        msg_writeStringDatum(m, 0, 'set')
-        msg_writeStringDatum(m, 1, ${state.arrayName})
+        msg_writeStringToken(m, 0, 'set')
+        msg_writeStringToken(m, 1, ${state.arrayName})
         ${ins.$0}.push(m)
     }
 `
@@ -128,9 +122,9 @@ export const loop: TabplayTildeCodeGenerator = (
         ${state.readPosition}++
         if (${state.readPosition} >= ${state.readUntil}) {
             const ${macros.typedVar('m', 'Message')} = msg_create([
-                ${ASC_MSG_STRING_TOKEN}, 4
+                MSG_TOKEN_TYPE_STRING, 4
             ])
-            msg_writeStringDatum(m, 0, 'bang')
+            msg_writeStringToken(m, 0, 'bang')
             ${outs.$1}.push(m)
         }
     } else {

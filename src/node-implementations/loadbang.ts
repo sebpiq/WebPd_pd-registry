@@ -9,8 +9,6 @@
  *
  */
 
-import { MSG_DATUM_TYPE_STRING } from '@webpd/compiler-js/src/constants'
-import { MSG_DATUM_TYPES_ASSEMBLYSCRIPT } from '@webpd/compiler-js/src/engine-assemblyscript/constants'
 import {
     NodeCodeGenerator,
     NodeImplementation,
@@ -22,8 +20,6 @@ type LoadbangNodeImplementation = NodeImplementation<
     NODE_ARGUMENTS_TYPES['_NO_ARGS']
 >
 
-const ASC_MSG_STRING_TOKEN = MSG_DATUM_TYPES_ASSEMBLYSCRIPT[MSG_DATUM_TYPE_STRING]
-
 // ------------------------------ declare ------------------------------ //
 export const declare: LoadbangCodeGenerator = (_, {state, macros}) => `
     let ${macros.typedVar(state.init, 'Int')} = 1
@@ -33,8 +29,8 @@ export const declare: LoadbangCodeGenerator = (_, {state, macros}) => `
 export const loop: LoadbangCodeGenerator = (_, {state, outs, macros}) => `
     if (${state.init}) {
         ${state.init} = 0
-        const ${macros.typedVar('m', 'Message')} = msg_create([${ASC_MSG_STRING_TOKEN}, 4])
-        msg_writeStringDatum(m, 0, 'bang')
+        const ${macros.typedVar('m', 'Message')} = msg_create([MSG_TOKEN_TYPE_STRING, 4])
+        msg_writeStringToken(m, 0, 'bang')
         ${outs.$0}.push(m)
     }
 `

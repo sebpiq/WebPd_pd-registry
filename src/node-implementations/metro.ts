@@ -9,8 +9,6 @@
  *
  */
 
-import { MSG_DATUM_TYPE_STRING } from '@webpd/compiler-js/src/constants'
-import { MSG_DATUM_TYPES_ASSEMBLYSCRIPT } from '@webpd/compiler-js/src/engine-assemblyscript/constants'
 import {
     NodeCodeGenerator,
     NodeImplementation,
@@ -19,8 +17,6 @@ import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 
 type MetroCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['metro']>
 type MetroNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['metro']>
-
-const ASC_MSG_STRING_TOKEN = MSG_DATUM_TYPES_ASSEMBLYSCRIPT[MSG_DATUM_TYPE_STRING]
 
 // ------------------------------ declare ------------------------------ //
 export const declare: MetroCodeGenerator = (node, { state, globs, macros, types }) => 
@@ -42,8 +38,8 @@ export const declare: MetroCodeGenerator = (node, { state, globs, macros, types 
         ], 'void')} => {
             if (msg_getLength(m) === 1) {
                 if (
-                    (msg_isFloatToken(m, 0) && msg_readFloatDatum(m, 0) === 0)
-                    || (msg_isStringToken(m, 0) && msg_readStringDatum(m, 0) === 'stop')
+                    (msg_isFloatToken(m, 0) && msg_readFloatToken(m, 0) === 0)
+                    || (msg_isStringToken(m, 0) && msg_readStringToken(m, 0) === 'stop')
                 ) {
                     ${state.nextTick} = 0
                     ${state.realNextTick} = 0
@@ -51,7 +47,7 @@ export const declare: MetroCodeGenerator = (node, { state, globs, macros, types 
 
                 } else if (
                     msg_isFloatToken(m, 0)
-                    || (msg_isStringToken(m, 0) && msg_readStringDatum(m, 0) === 'bang')
+                    || (msg_isStringToken(m, 0) && msg_readStringToken(m, 0) === 'bang')
                 ) {
                     ${state.nextTick} = ${globs.frame}
                     ${state.realNextTick} = ${types.Float}(${globs.frame})
@@ -65,7 +61,7 @@ export const declare: MetroCodeGenerator = (node, { state, globs, macros, types 
             macros.typedVar('m', 'Message')
         ], 'void')} => {
             if (msg_getLength(m) === 1 && msg_isFloatToken(m, 0)) {
-                ${state.funcSetRate}(msg_readFloatDatum(m, 0))
+                ${state.funcSetRate}(msg_readFloatToken(m, 0))
                 
             } else {
                 throw new Error("Unexpected message")
@@ -88,8 +84,8 @@ export const loop: MetroCodeGenerator = (_, {state, ins, outs, types, globs, mac
         ${state.funcHandleMessage0}(${ins.$0}.shift())
     }
     if (${globs.frame} === ${state.nextTick}) {
-        const ${macros.typedVar('m', 'Message')} = msg_create([${ASC_MSG_STRING_TOKEN}, 4])
-        msg_writeStringDatum(m, 0, 'bang')
+        const ${macros.typedVar('m', 'Message')} = msg_create([MSG_TOKEN_TYPE_STRING, 4])
+        msg_writeStringToken(m, 0, 'bang')
         ${outs.$0}.push(m)
         ${state.realNextTick} = ${state.realNextTick} + ${state.rate}
         ${state.nextTick} = ${types.Int}(Math.round(${state.realNextTick}))

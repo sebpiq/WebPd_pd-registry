@@ -33,7 +33,7 @@ const declare: BinopTildeCodeGenerator = (node, {state, macros}) =>
             const ${state.funcHandleMessage1} = ${macros.typedFuncHeader([
                 macros.typedVar('m', 'Message')
             ], 'void')} => {
-                ${state.rightOp} = msg_readFloatDatum(m, 0)
+                ${state.rightOp} = msg_readFloatToken(m, 0)
             }
         `
 
