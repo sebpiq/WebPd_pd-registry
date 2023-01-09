@@ -26,7 +26,6 @@ describe('binop~', () => {
                     target,
                     node: buildNode(NODE_BUILDERS['+~'], '+~', { value: 1 }),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
-                    connectedSources: ['1_signal'],
                 },
                 [
                     { '0': 1, '1_signal': 0.1 },
@@ -46,7 +45,6 @@ describe('binop~', () => {
                     target,
                     node: buildNode(NODE_BUILDERS['+~'], '+~', {}),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
-                    connectedSources: ['1_message'],
                 },
                 [{ '0': 123 }],
                 [{ '0': 123 }]
@@ -62,7 +60,6 @@ describe('binop~', () => {
                     target,
                     node: buildNode(NODE_BUILDERS['+~'], '+~', { value: 10 }),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
-                    connectedSources: ['1_message'],
                 },
                 [
                     { '0': 1 },
@@ -92,7 +89,6 @@ describe('binop~', () => {
                     target,
                     node: buildNode(NODE_BUILDERS['*~'], '*~', { value: 1 }),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
-                    connectedSources: ['1_signal'],
                 },
                 [
                     { '0': 1, '1_signal': 1 },
@@ -112,7 +108,6 @@ describe('binop~', () => {
                     target,
                     node: buildNode(NODE_BUILDERS['*~'], '*~', {}),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
-                    connectedSources: ['1_message'],
                 },
                 [{ '0': 123 }],
                 [{ '0': 123 }]
@@ -128,7 +123,6 @@ describe('binop~', () => {
                     target,
                     node: buildNode(NODE_BUILDERS['*~'], '*~', { value: 2 }),
                     nodeImplementations: NODE_IMPLEMENTATIONS,
-                    connectedSources: ['1_message'],
                 },
                 [
                     { '0': 1 },

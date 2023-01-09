@@ -20,22 +20,7 @@ type LoadbangNodeImplementation = NodeImplementation<
     NODE_ARGUMENTS_TYPES['_NO_ARGS']
 >
 
-// ------------------------------ declare ------------------------------ //
-export const declare: LoadbangCodeGenerator = (_, {state, macros}) => `
-    let ${macros.typedVar(state.init, 'Int')} = 1
+// ------------------------------- initialize ------------------------------ //
+export const initialize: LoadbangCodeGenerator = (_, {snds}) => `
+    ${snds.$0}(msg_bang())
 `
-
-// ------------------------------- loop ------------------------------ //
-export const loop: LoadbangCodeGenerator = (_, {state, outs, macros}) => `
-    if (${state.init}) {
-        ${state.init} = 0
-        const ${macros.typedVar('m', 'Message')} = msg_create([MSG_TOKEN_TYPE_STRING, 4])
-        msg_writeStringToken(m, 0, 'bang')
-        ${outs.$0}.push(m)
-    }
-`
-
-// ------------------------------------------------------------------- //
-export const stateVariables: LoadbangNodeImplementation['stateVariables'] = [
-    'init',
-]

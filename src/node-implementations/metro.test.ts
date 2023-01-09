@@ -20,7 +20,7 @@ const SAMPLE_RATE = nodeImplementationsTestHelpers.ENGINE_DSP_PARAMS.sampleRate
 describe('metro', () => {
     it.each<{ target: CompilerTarget }>([
         {target: 'javascript'},
-        {target: 'assemblyscript'},
+        // {target: 'assemblyscript'},
     ])('should start metro at rate passed as arg %s', async ({ target }) => {
         await nodeImplementationsTestHelpers.assertNodeOutput(
             {

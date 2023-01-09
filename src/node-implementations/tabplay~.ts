@@ -44,96 +44,90 @@ export const declare: TabplayTildeCodeGenerator = (
         ${state.readPosition} = ${state.array}.length
         ${state.readUntil} = ${state.array}.length
     }
-
-    const ${state.funcHandleMessage0} = ${macros.typedFuncHeader([
-        macros.typedVar('m', 'Message')
-    ], 'void')} => {
-        
-        if (msg_getLength(m) === 1) {
-            if (
-                msg_isStringToken(m, 0)
-                && msg_readStringToken(m, 0) === 'bang'
-            ) {
-                // TODO : REMOVE, bug
-                console.log('BANG ' + ${state.arrayName})
-                ${state.funcSetArrayName}(${state.arrayName})
-
-                ${state.readPosition} = 0
-                ${state.readUntil} = ${state.array}.length
-                return 
-
-            } else if (msg_isFloatToken(m, 0)) {
-                ${state.readPosition} = ${types.Int}(msg_readFloatToken(m, 0))
-                ${state.readUntil} = ${state.array}.length
-                return 
-            }
-        
-        } else if (msg_getLength(m) === 2) {
-            if (
-                msg_isStringToken(m, 0)
-                && msg_readStringToken(m, 0) === 'set'
-            ) {
-                ${state.funcSetArrayName}(msg_readStringToken(m, 1))    
-                return
-
-            } else if (
-                msg_isFloatToken(m, 0)
-                && msg_isFloatToken(m, 1)
-            ) {
-                ${state.readPosition} = ${types.Int}(msg_readFloatToken(m, 0))
-                ${state.readUntil} = ${types.Int}(Math.min(
-                    ${types.Float}(${state.readPosition}) + msg_readFloatToken(m, 1), 
-                    ${types.Float}(${state.array}.length)
-                ))
-                return
-            }
-        }
-        throw new Error("Unexpected message")
-    }
 `
 
 // ------------------------------- initialize ------------------------------ //
 export const initialize: TabplayTildeCodeGenerator = (
     _,
-    {ins, state, macros},
+    {rcvs, state, macros},
 ) => `
     if (${state.arrayName}.length) {
         const ${macros.typedVar('m', 'Message')} = msg_create([
-            MSG_TOKEN_TYPE_STRING, 3,
-            MSG_TOKEN_TYPE_STRING, ${state.arrayName}.length
+            MSG_STRING_TOKEN, 3,
+            MSG_STRING_TOKEN, ${state.arrayName}.length
         ])
         msg_writeStringToken(m, 0, 'set')
         msg_writeStringToken(m, 1, ${state.arrayName})
-        ${ins.$0}.push(m)
+        ${rcvs.$0}(m)
     }
 `
 
 // ------------------------------- loop ------------------------------ //
 export const loop: TabplayTildeCodeGenerator = (
     _,
-    {ins, state, outs, macros},
+    {state, snds, outs},
 ) => `
-    while (${ins.$0}.length) {
-        ${state.funcHandleMessage0}(${ins.$0}.shift())
-    }
-
     if (${state.readPosition} < ${state.readUntil}) {
         ${outs.$0} = ${state.array}[${state.readPosition}]
         ${state.readPosition}++
         if (${state.readPosition} >= ${state.readUntil}) {
-            const ${macros.typedVar('m', 'Message')} = msg_create([
-                MSG_TOKEN_TYPE_STRING, 4
-            ])
-            msg_writeStringToken(m, 0, 'bang')
-            ${outs.$1}.push(m)
+            console.log('[tabplay~] END')
+            ${snds.$1}(msg_bang())
         }
     } else {
         ${outs.$0} = 0
     }
 `
 
+// ------------------------------- messages ------------------------------ //
+export const messages: TabplayTildeNodeImplementation['messages'] = (_, {state, types, globs}) => ({
+    '0': `
+    if (msg_getLength(${globs.m}) === 1) {
+        if (
+            msg_isStringToken(${globs.m}, 0)
+            && msg_readStringToken(${globs.m}, 0) === 'bang'
+        ) {
+            // TODO : REMOVE, bug
+            console.log('[tabplay~] start ' + ${state.arrayName})
+            ${state.funcSetArrayName}(${state.arrayName})
+
+            ${state.readPosition} = 0
+            ${state.readUntil} = ${state.array}.length
+            return 
+
+        } else if (msg_isFloatToken(${globs.m}, 0)) {
+            ${state.readPosition} = ${types.Int}(msg_readFloatToken(${globs.m}, 0))
+            ${state.readUntil} = ${state.array}.length
+            return 
+        }
+    
+    } else if (msg_getLength(${globs.m}) === 2) {
+        if (
+            msg_isStringToken(${globs.m}, 0)
+            && msg_readStringToken(${globs.m}, 0) === 'set'
+        ) {
+            ${state.funcSetArrayName}(msg_readStringToken(${globs.m}, 1))    
+            return
+
+        } else if (
+            msg_isFloatToken(${globs.m}, 0)
+            && msg_isFloatToken(${globs.m}, 1)
+        ) {
+            ${state.readPosition} = ${types.Int}(msg_readFloatToken(${globs.m}, 0))
+            ${state.readUntil} = ${types.Int}(Math.min(
+                ${types.Float}(${state.readPosition}) + msg_readFloatToken(${globs.m}, 1), 
+                ${types.Float}(${state.array}.length)
+            ))
+            return
+        }
+    }
+    throw new Error("Unexpected message")
+    `
+})
+
+
 // ------------------------------------------------------------------- //
-export const stateVariables: TabplayTildeNodeImplementation['stateVariables'] =
+export const stateVariables: TabplayTildeNodeImplementation['stateVariables'] = () =>
     [
         'array',
         'arrayName',
@@ -141,5 +135,4 @@ export const stateVariables: TabplayTildeNodeImplementation['stateVariables'] =
         'readUntil',
         'funcSetArrayName',
         'funcPlay',
-        'funcHandleMessage0',
     ]

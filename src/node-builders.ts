@@ -109,6 +109,47 @@ const tabplayTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['tabplay~']> = {
     }),
 }
 
+const readsfTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['_NO_ARGS']> = {
+    translateArgs: (pdNode, patch) => ({}),
+    build: () => ({
+        inlets: {
+            '0': { type: 'message', id: '0' },
+        },
+        outlets: {
+            '0': { type: 'signal', id: '0' },
+            '1': { type: 'message', id: '1' },
+        },
+    }),
+}
+
+// TODO : test
+const writesfTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['writesf~']> = {
+    translateArgs: (pdNode) => ({
+        channelCount: validation.assertOptionalNumber(pdNode.args[0]) || 1,
+    }),
+    build: ({ channelCount }) => {
+        const inlets: DspGraph.PortletMap = {
+            '0_message': { type: 'message', id: '0_message' },
+            '0_signal': { type: 'signal', id: '0_signal' },
+        }
+        for (let channel = 1; channel < channelCount; channel++) {
+            inlets[`${channel}`] = { type: 'signal', id: `${channel}` }
+        }
+
+        return {
+            inlets,
+            outlets: {},
+            isEndSink: true,
+        }
+    },
+    rerouteConnectionIn: (outlet, inletId): DspGraph.PortletId => {
+        if (inletId === '0') {
+            return outlet.type === 'message' ? '0_message' : '0_signal'
+        }
+        return undefined
+    },
+}
+
 const dacTildeBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['dac~']> = {
     translateArgs: (pdNode, patch) => {
         let channelMapping: Array<number>
@@ -211,6 +252,21 @@ const metroBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['metro']> = {
     }),
 }
 
+const delayBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['delay']> = {
+    translateArgs: (pdNode) => ({
+        delay: validation.assertOptionalNumber(pdNode.args[0]),
+    }),
+    build: () => ({
+        inlets: {
+            '0': { type: 'message', id: '0' },
+            '1': { type: 'message', id: '1' },
+        },
+        outlets: {
+            '0': { type: 'message', id: '0' },
+        },
+    }),
+}
+
 const soundfilerBuilder: NodeBuilder<NODE_ARGUMENTS_TYPES['_NO_ARGS']> = {
     translateArgs: (pdNode) => ({}),
     build: () => ({
@@ -243,8 +299,11 @@ const NODE_BUILDERS = {
     'dac~': dacTildeBuilder,
     'adc~': adcTildeBuilder,
     'tabplay~': tabplayTildeBuilder,
+    'readsf~': readsfTildeBuilder,
+    'writesf~': writesfTildeBuilder,
     msg: msgBuilder,
     metro: metroBuilder,
+    delay: delayBuilder,
     loadbang: loadbangBuilder,
     soundfiler: soundfilerBuilder,
 }

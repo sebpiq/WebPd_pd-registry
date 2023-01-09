@@ -40,19 +40,6 @@ const declareMessage: OscTildeCodeGenerator = (_, {state, globs, macros}) => `
 
     const ${state.refreshK} = ${macros.typedFuncHeader([], 'void')} => 
         ${state.K} = ${state.currentFrequency} * 2 * Math.PI / ${globs.sampleRate}
-
-    const ${state.funcHandleMessage0} = ${macros.typedFuncHeader([
-        macros.typedVar('m', 'Message')
-    ], 'void')} => {
-        ${state.currentFrequency} = msg_readFloatToken(m, 0)
-        ${state.refreshK}()
-    }
-
-    const ${state.funcHandleMessage1} = ${macros.typedFuncHeader([
-        macros.typedVar('m', 'Message')
-    ], 'void')} => {
-        ${state.phase} = msg_readFloatToken(m, 0) % 1.0 * 2 * Math.PI
-    }
 `
 
 // ------------------------------ initialize ------------------------------ //
@@ -66,9 +53,8 @@ const initializeSignal: OscTildeCodeGenerator = (node, { state, globs, ins }) =>
     ${state.J} = 2 * Math.PI / ${globs.sampleRate}
 `
 
-const initializeMessage: OscTildeCodeGenerator = (node, { state, globs, ins }) => `
+const initializeMessage: OscTildeCodeGenerator = (node, { state }) => `
     ${state.currentFrequency} = ${node.args.frequency || 0}
-    ${state.K} = 0
     ${state.refreshK}()
 `
 
@@ -80,34 +66,38 @@ export const loop: OscTildeCodeGenerator = (node, ...args) => {
 }
 
 const loopSignal: OscTildeCodeGenerator = (_, {ins, state, outs}) => `
-    if (${ins.$1}.length) {
-        ${state.phase} = msg_readFloatToken(${ins.$1}.pop(), 0) % 1.0 * 2 * Math.PI
-    }
     ${outs.$0} = Math.cos(${state.phase})
     ${state.phase} += ${state.J} * ${ins.$0_signal}
 `
 
 // Take only the last received frequency message (first in the list)
-const loopMessage : OscTildeCodeGenerator = (_, {ins, state, outs}) => `
-    if (${ins.$0_message}.length) {
-        ${state.funcHandleMessage0}(${ins.$0_message}.pop())
-    }
-    if (${ins.$1}.length) {
-        ${state.funcHandleMessage1}(${ins.$1}.pop())
-    }
+const loopMessage : OscTildeCodeGenerator = (_, {state, outs}) => `
     ${outs.$0} = Math.cos(${state.phase})
     ${state.phase} += ${state.K}
 `
 
+// ------------------------------- messages ------------------------------ //
+export const messages: OscTildeNodeImplementation['messages'] = (node, {globs, state}) => ({
+    '0_message': `
+    if (msg_getLength(${globs.m}) === 1 && msg_isFloatToken(${globs.m}, 0)) {
+        ${state.currentFrequency} = msg_readFloatToken(${globs.m}, 0)
+        ${state.refreshK}()
+        return 
+    }
+    throw new Error("${node.type} <${node.id}> inlet <0_message> invalid message received.")
+    `,
+    
+    '1': `
+    ${state.phase} = msg_readFloatToken(${globs.m}, 0) % 1.0 * 2 * Math.PI`
+})
+
 // ------------------------------------------------------------------- //
-export const stateVariables: OscTildeNodeImplementation['stateVariables'] = [
+export const stateVariables: OscTildeNodeImplementation['stateVariables'] = () => [
     'phase',
     'currentFrequency',
     'J',
     'refreshK',
     'K',
-    'funcHandleMessage0',
-    'funcHandleMessage1',
 ]
 
 const _hasSignalInput = (node: DspGraph.Node) =>

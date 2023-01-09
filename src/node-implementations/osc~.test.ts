@@ -32,7 +32,6 @@ describe('osc~', () => {
                     frequency: 0,
                 }),
                 nodeImplementations: NODE_IMPLEMENTATIONS,
-                connectedSources: ['0_signal'],
             },
             [
                 { '0_signal': frequency1 },
@@ -66,7 +65,6 @@ describe('osc~', () => {
                 target,
                 node: buildNode(NODE_BUILDERS['osc~'], 'osc~', { frequency }),
                 nodeImplementations: NODE_IMPLEMENTATIONS,
-                connectedSources: ['0_signal'],
             },
             [
                 { '0_signal': frequency, '1': [] },

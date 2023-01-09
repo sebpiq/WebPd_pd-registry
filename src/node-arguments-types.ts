@@ -15,8 +15,10 @@ interface NODE_ARGUMENTS_TYPES {
     'adc~': { channelMapping: Array<number> }
     'mixer~': { channelCount: number }
     'tabplay~': { arrayName: string }
+    'writesf~': { channelCount: number }
     msg: { template: Array<string | number> }
     metro: { rate: number }
+    delay: { delay: number }
 
     // Generic arguments types
     _BINOP_TILDE: { value?: number }

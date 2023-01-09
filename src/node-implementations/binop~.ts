@@ -30,11 +30,6 @@ const declare: BinopTildeCodeGenerator = (node, {state, macros}) =>
         ? ''
         : `
             let ${macros.typedVar(state.rightOp, 'Float')}
-            const ${state.funcHandleMessage1} = ${macros.typedFuncHeader([
-                macros.typedVar('m', 'Message')
-            ], 'void')} => {
-                ${state.rightOp} = msg_readFloatToken(m, 0)
-            }
         `
 
 // ------------------------------ initialize ------------------------------ //
@@ -52,17 +47,19 @@ export const makeLoop = (operator: string): BinopTildeCodeGenerator => {
     return (node, {ins, outs, state}) =>
         _hasSignalInput(node)
             ? `${outs.$0} = ${ins.$0} ${operator} ${ins.$1_signal}`
-            : `
-                if (${ins.$1_message}.length) {
-                    ${state.funcHandleMessage1}(${ins.$1_message}.pop())
-                }
-                ${outs.$0} = ${ins.$0} ${operator} ${state.rightOp}
-            `
+            : `${outs.$0} = ${ins.$0} ${operator} ${state.rightOp}`
 }
 
+// ------------------------------- messages ------------------------------ //
+const messages: BinopTildeNodeImplementation['messages'] = (node, {state, globs}) => ({
+    '1_message': !_hasSignalInput(node) ? `
+        ${state.rightOp} = msg_readFloatToken(${globs.m}, 0)
+    `: ''
+})
+
 // ------------------------------------------------------------------- //
-export const stateVariables: BinopTildeNodeImplementation['stateVariables'] = [
-    'rightOp', 'funcHandleMessage1'
+export const stateVariables: BinopTildeNodeImplementation['stateVariables'] = () => [
+    'rightOp'
 ]
 
 const _hasSignalInput = (node: DspGraph.Node) =>
@@ -73,12 +70,14 @@ const binopTilde: NodeImplementations = {
         initialize: makeInitialize(0),
         declare,
         loop: makeLoop('+'),
+        messages,
         stateVariables,
     },
     '*~': {
         initialize: makeInitialize(1),
         declare,
         loop: makeLoop('*'),
+        messages,
         stateVariables,
     },
 }

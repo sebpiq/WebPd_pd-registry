@@ -18,58 +18,103 @@ import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
 type SoundfilerCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['_NO_ARGS']>
 type SoundfilerNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['_NO_ARGS']>
 
+// TODO: lots of things left to implement
+//      - channel count
+//      - simlutaneous operations
+
 // ------------------------------ declare ------------------------------ //
-export const declare: SoundfilerCodeGenerator = (_, {macros, state, types, globs}) => `
+export const declare: SoundfilerCodeGenerator = (_, {macros, state, types, globs, outs}) => `
     let ${macros.typedVar(state.arrayNames, 'Array<string>')} = []
 
     const ${state.funcHandleMessage0} = ${macros.typedFuncHeader([
         macros.typedVar('m', 'Message')
     ], 'void')} => {
-        if (msg_getLength(m) >= 3) {
-            if (msg_readStringToken(m, 0) === 'read') {
-                const stringsIndexes: Array<Int> = []
-                const stringsValues: Array<string> = []
-                for (let i = 1; i < msg_getLength(m); i++) {
-                    if (msg_isStringToken(m, i)) {
-                        stringsIndexes.push(i)
-                        stringsValues.push(msg_readStringToken(m, i))
-                    }
-                }
-                let ${macros.typedVar('url', 'string')} = ''
-                for (let i = 0; i < stringsIndexes.length; i++) {
-                    let ${macros.typedVar('sIndex', 'Int')} = stringsIndexes[i]
-                    let ${macros.typedVar('sValue', 'string')} = stringsValues[i]
-                    if (sValue.includes('/') || sValue.includes('.')) {
-                        url = sValue
-                        ${state.arrayNames} = []
-                    } else if (url.length > 0) {
-                        ${state.arrayNames}.push(sValue)
-                    }
-                }
-    
-                console.log('[soundfiler] READ ' + url)
-                fs_readSoundFile(url, (id: fs_OperationId, status: fs_OperationStatus, sound: FloatArray[]) => {
-                    const ${macros.typedVar('channelCount', 'Int')} = ${types.Int}(Math.min(${state.arrayNames}.length, sound.length))
-                    for (let channel = 0; channel < channelCount; channel++) {
-                        ${globs.arrays}.set(${state.arrayNames}[channel], sound[channel])
-                    }
-                })
-                return
-            }
-
-        } else {
-            throw new Error("Unexpected message")
-        }
     }
 `
 
 // ------------------------------- loop ------------------------------ //
-// TODO: right inlet, reset phase
 export const loop: SoundfilerCodeGenerator = (_, { state, ins }) => `
     while (${ins.$0}.length) {
         ${state.funcHandleMessage0}(${ins.$0}.shift())
     }
 `
 
+// ------------------------------- messages ------------------------------ //
+export const messages: SoundfilerNodeImplementation['messages'] = (_, { state, macros, globs, snds }) => ({
+    '0': `
+    if (
+        msg_getLength(${globs.m}) >= 3 
+        && msg_isStringToken(${globs.m}, 0)
+        && (
+            msg_readStringToken(${globs.m}, 0) === 'read'
+            || msg_readStringToken(${globs.m}, 0) === 'write'
+        )
+    ) {
+        const ${macros.typedVar('operationType', 'string')} = msg_readStringToken(${globs.m}, 0)
+        
+        let ${macros.typedVar('i', 'Int')} = 0
+        let ${macros.typedVar('url', 'string')} = ''
+        const ${macros.typedVar('stringsIndexes', 'Array<Int>')} = []
+        const ${macros.typedVar('stringsValues', 'Array<string>')} = []
+
+        for (i = 1; i < msg_getLength(${globs.m}); i++) {
+            if (msg_isStringToken(${globs.m}, i)) {
+                stringsIndexes.push(i)
+                stringsValues.push(msg_readStringToken(${globs.m}, i))
+            }
+        }
+        
+        for (i = 0; i < stringsIndexes.length; i++) {
+            let ${macros.typedVar('sIndex', 'Int')} = stringsIndexes[i]
+            let ${macros.typedVar('sValue', 'string')} = stringsValues[i]
+            if (sValue.includes('/') || sValue.includes('.')) {
+                url = sValue
+                ${state.arrayNames} = []
+            } else if (url.length > 0) {
+                ${state.arrayNames}.push(sValue)
+            }
+        }
+
+        const ${macros.typedVar('channelCount', 'Int')} = ${state.arrayNames}.length
+
+        if (operationType === 'read') {
+            console.log('[soundfiler] READ ' + url + ' ' + channelCount.toString())
+            fs_readSoundFile(url, fs_soundInfo(channelCount), ${macros.typedFuncHeader([
+                macros.typedVar('id', 'fs_OperationId'),
+                macros.typedVar('status', 'fs_OperationStatus'),
+                macros.typedVar('sound', 'FloatArray[]'),
+            ], 'void')} => {
+                let ${macros.typedVar('i', 'Int')} = 0
+                for (i = 0; i < sound.length; i++) {
+                    ${globs.arrays}.set(${state.arrayNames}[i], sound[i])
+                }
+                if (sound.length) {
+                    ${snds.$0}(msg_floats([sound[0].length]))
+                } else {
+                    ${snds.$0}(msg_floats([0]))
+                }
+                console.log('[soundfiler] READ done')
+            })
+
+        } else {
+            console.log('[soundfiler] WRITE ' + url + ' ' + channelCount.toString())
+            const ${macros.typedVar('sound', 'FloatArray[]')} = []
+            for (i = 0; i < channelCount; i++) {
+                sound.push(${globs.arrays}.get(${state.arrayNames}[i]))
+            }
+            fs_writeSoundFile(sound, url, fs_soundInfo(channelCount), ${macros.typedFuncHeader([
+                macros.typedVar('id', 'fs_OperationId'),
+                macros.typedVar('status', 'fs_OperationStatus'),
+            ], 'void')} => {
+                console.log('[soundfiler] WRITE done')
+            })
+        }
+
+        return
+    }
+    throw new Error("Unexpected message")
+    `
+})
+
 // ------------------------------------------------------------------- //
-export const stateVariables: SoundfilerNodeImplementation['stateVariables'] = ['funcHandleMessage0', 'arrayNames']
+export const stateVariables: SoundfilerNodeImplementation['stateVariables'] = () => ['arrayNames']

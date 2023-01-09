@@ -13,7 +13,10 @@ import * as oscTilde from './osc~'
 import * as dacTilde from './dac~'
 import * as adcTilde from './adc~'
 import * as tabplayTilde from './tabplay~'
+import * as readsfTilde from './readsf~'
+import * as writesfTilde from './writesf~'
 import * as metro from './metro'
+import * as delay from './delay'
 import * as loadbang from './loadbang'
 import binopTilde from './binop~'
 import * as mixerTilde from './mixer~'
@@ -29,9 +32,12 @@ const NODE_IMPLEMENTATIONS = {
     'dac~': dacTilde,
     'adc~': adcTilde,
     'tabplay~': tabplayTilde,
+    'readsf~': readsfTilde,
+    'writesf~': writesfTilde,
     loadbang: loadbang,
     msg: msg,
     metro: metro,
+    delay: delay,
     soundfiler: soundfiler,
 }
 
