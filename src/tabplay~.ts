@@ -9,21 +9,32 @@
  *
  */
 
-import {
-    NodeCodeGenerator,
-    NodeImplementation,
-} from '@webpd/compiler-js/src/types'
-import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
+import { NodeCodeGenerator, NodeImplementation } from '@webpd/compiler-js/src/types'
+import { NodeBuilder, pdJsonHelpers } from '@webpd/pd-json'
 
-type TabplayTildeCodeGenerator = NodeCodeGenerator<
-    NODE_ARGUMENTS_TYPES['tabplay~']
->
-type TabplayTildeNodeImplementation = NodeImplementation<
-    NODE_ARGUMENTS_TYPES['tabplay~']
->
+interface NodeArguments { arrayName: string }
+
+// ------------------------------- node builder ------------------------------ //
+const builder: NodeBuilder<NodeArguments> = {
+    translateArgs: (pdNode, patch) => ({
+        arrayName: pdJsonHelpers.resolveDollarArg(
+            pdNode.args[0].toString(),
+            patch
+        ),
+    }),
+    build: () => ({
+        inlets: {
+            '0': { type: 'message', id: '0' },
+        },
+        outlets: {
+            '0': { type: 'signal', id: '0' },
+            '1': { type: 'message', id: '1' },
+        },
+    }),
+}
 
 // ------------------------------ declare ------------------------------ //
-export const declare: TabplayTildeCodeGenerator = (
+const declare: NodeCodeGenerator<NodeArguments> = (
     node,
     {state, types, globs, macros},
 ) => `
@@ -47,7 +58,7 @@ export const declare: TabplayTildeCodeGenerator = (
 `
 
 // ------------------------------- initialize ------------------------------ //
-export const initialize: TabplayTildeCodeGenerator = (
+const initialize: NodeCodeGenerator<NodeArguments> = (
     _,
     {rcvs, state, macros},
 ) => `
@@ -63,7 +74,7 @@ export const initialize: TabplayTildeCodeGenerator = (
 `
 
 // ------------------------------- loop ------------------------------ //
-export const loop: TabplayTildeCodeGenerator = (
+const loop: NodeCodeGenerator<NodeArguments> = (
     _,
     {state, snds, outs},
 ) => `
@@ -80,7 +91,7 @@ export const loop: TabplayTildeCodeGenerator = (
 `
 
 // ------------------------------- messages ------------------------------ //
-export const messages: TabplayTildeNodeImplementation['messages'] = (_, {state, types, globs}) => ({
+const messages: NodeImplementation<NodeArguments>['messages'] = (_, {state, types, globs}) => ({
     '0': `
     if (msg_getLength(${globs.m}) === 1) {
         if (
@@ -127,7 +138,7 @@ export const messages: TabplayTildeNodeImplementation['messages'] = (_, {state, 
 
 
 // ------------------------------------------------------------------- //
-export const stateVariables: TabplayTildeNodeImplementation['stateVariables'] = () =>
+const stateVariables: NodeImplementation<NodeArguments>['stateVariables'] = () =>
     [
         'array',
         'arrayName',
@@ -136,3 +147,11 @@ export const stateVariables: TabplayTildeNodeImplementation['stateVariables'] = 
         'funcSetArrayName',
         'funcPlay',
     ]
+
+const nodeImplementation: NodeImplementation<NodeArguments> = {declare, initialize, messages, loop, stateVariables}
+
+export { 
+    builder,
+    nodeImplementation,
+    NodeArguments,
+}

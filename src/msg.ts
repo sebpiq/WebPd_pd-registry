@@ -12,14 +12,62 @@
 import { Code, NodeCodeGenerator, NodeImplementation } from '@webpd/compiler-js/src/types'
 import { DspGraph } from '@webpd/dsp-graph'
 import { buildMessageTransferOperations } from '@webpd/compiler-js'
-import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
+import { NodeBuilder } from '@webpd/pd-json'
 
-type MsgCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['msg']>
-type MsgNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['msg']>
+interface NodeArguments { template: Array<string | number> }
 
 // TODO : no need to declare 'inMessage', 'stringToken', 'otherStringToken', 'stringMem' ... if they are not used
 
-export const buildMsgTransferCode = (...[node, {state, globs}]: Parameters<MsgCodeGenerator>) => {
+// ------------------------------- node builder ------------------------------ //
+const builder: NodeBuilder<NodeArguments> = {
+    translateArgs: (pdNode) => ({
+        template: pdNode.args,
+    }),
+    build: () => ({
+        inlets: {
+            '0': { type: 'message', id: '0' },
+        },
+        outlets: {
+            '0': { type: 'message', id: '0' },
+        },
+    }),
+}
+
+// ------------------------------ declare ------------------------------ //
+const declare: NodeCodeGenerator<NodeArguments> = (node, variableNames, _) => {
+    const {macros, state} = variableNames
+    const {inMessageUsed, outMessageCode} = buildMsgTransferCode(node, variableNames, _)
+
+    return `
+        let ${macros.typedVar(state.outTemplate, 'MessageTemplate')} = []
+        let ${macros.typedVar(state.outMessage, 'Message')} = msg_create([])
+        ${!inMessageUsed ? outMessageCode : ''}
+    `
+}
+
+// ------------------------------- loop ------------------------------ //
+const messages: NodeImplementation<NodeArguments>['messages'] = (node, variableNames, _) => {
+    const {snds, macros, state} = variableNames
+    const {inMessageUsed, outMessageCode} = buildMsgTransferCode(node, variableNames, _)
+
+    return {'0': `
+        ${inMessageUsed ? `
+            let ${macros.typedVar('stringToken', 'string')}
+            let ${macros.typedVar('otherStringToken', 'string')}
+            const ${macros.typedVar('stringMem', 'Array<string>')} = []
+            ${outMessageCode}
+        `: ``}
+        ${snds.$0}(${state.outMessage})
+    `}
+}
+
+// ------------------------------------------------------------------- //
+const stateVariables: NodeImplementation<NodeArguments>['stateVariables'] = () => [
+    'outTemplate',
+    'outMessage',
+]
+
+const buildMsgTransferCode = (...[node, {state, globs}]: Parameters<NodeCodeGenerator<NodeArguments>>) => {
     const template = node.args.template as Array<DspGraph.NodeArgument>
     let outTemplateCode: Code = ''
     let outMessageCode: Code = ''
@@ -97,36 +145,10 @@ export const buildMsgTransferCode = (...[node, {state, globs}]: Parameters<MsgCo
     }
 }
 
-// ------------------------------ declare ------------------------------ //
-export const declare: MsgCodeGenerator = (node, variableNames, _) => {
-    const {macros, state} = variableNames
-    const {inMessageUsed, outMessageCode} = buildMsgTransferCode(node, variableNames, _)
+const nodeImplementation: NodeImplementation<NodeArguments> = {declare, messages, stateVariables}
 
-    return `
-        let ${macros.typedVar(state.outTemplate, 'MessageTemplate')} = []
-        let ${macros.typedVar(state.outMessage, 'Message')} = msg_create([])
-        ${!inMessageUsed ? outMessageCode : ''}
-    `
+export { 
+    builder,
+    nodeImplementation,
+    NodeArguments,
 }
-
-// ------------------------------- loop ------------------------------ //
-export const messages: MsgNodeImplementation['messages'] = (node, variableNames, _) => {
-    const {snds, macros, state} = variableNames
-    const {inMessageUsed, outMessageCode} = buildMsgTransferCode(node, variableNames, _)
-
-    return {'0': `
-        ${inMessageUsed ? `
-            let ${macros.typedVar('stringToken', 'string')}
-            let ${macros.typedVar('otherStringToken', 'string')}
-            const ${macros.typedVar('stringMem', 'Array<string>')} = []
-            ${outMessageCode}
-        `: ``}
-        ${snds.$0}(${state.outMessage})
-    `}
-}
-
-// ------------------------------------------------------------------- //
-export const stateVariables: MsgNodeImplementation['stateVariables'] = () => [
-    'outTemplate',
-    'outMessage',
-]

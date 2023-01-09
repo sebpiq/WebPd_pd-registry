@@ -13,12 +13,12 @@ import {
     NodeCodeGenerator,
     NodeImplementation,
 } from '@webpd/compiler-js/src/types'
-import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
+import { DspGraph } from '@webpd/dsp-graph'
+import { NodeBuilder, validation } from '@webpd/pd-json'
 
 const BLOCK_SIZE = 44100 * 5
 
-type ReadsfTildeCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['_NO_ARGS']>
-type ReadsfTildeNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['_NO_ARGS']>
+interface NodeArguments { channelCount: number }
 
 // TODO: lots of things left to implement
 // TODO : multi-channel
@@ -27,8 +27,37 @@ type ReadsfTildeNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['_N
 //      - what happens when stream ended and starting again ? 
 //      - etc ...
 
+// ------------------------------- node builder ------------------------------ //
+// TODO : test
+const builder: NodeBuilder<NodeArguments> = {
+    translateArgs: (pdNode) => ({
+        channelCount: validation.assertOptionalNumber(pdNode.args[0]) || 1,
+    }),
+    build: ({ channelCount }) => {
+        const inlets: DspGraph.PortletMap = {
+            '0_message': { type: 'message', id: '0_message' },
+            '0_signal': { type: 'signal', id: '0_signal' },
+        }
+        for (let channel = 1; channel < channelCount; channel++) {
+            inlets[`${channel}`] = { type: 'signal', id: `${channel}` }
+        }
+
+        return {
+            inlets,
+            outlets: {},
+            isSignalSink: true,
+        }
+    },
+    rerouteConnectionIn: (outlet, inletId): DspGraph.PortletId => {
+        if (inletId === '0') {
+            return outlet.type === 'message' ? '0_message' : '0_signal'
+        }
+        return undefined
+    },
+}
+
 // ------------------------------ declare ------------------------------ //
-export const declare: ReadsfTildeCodeGenerator = (_, {macros, state}) => `
+const declare: NodeCodeGenerator<NodeArguments> = (_, {macros, state}) => `
     let ${macros.typedVar(state.operationId, 'fs_OperationId')} = -1
     let ${macros.typedVar(state.isWriting, 'boolean')} = false
     const ${macros.typedVar(state.block, 'FloarArray[]')} = [
@@ -44,7 +73,7 @@ export const declare: ReadsfTildeCodeGenerator = (_, {macros, state}) => `
 `
 
 // ------------------------------- loop ------------------------------ //
-export const loop: ReadsfTildeCodeGenerator = (_, { state, ins }) => `
+const loop: NodeCodeGenerator<NodeArguments> = (_, { state, ins }) => `
     while (${ins.$0_message}.length) {
         ${state.funcHandleMessage0}(${ins.$0_message}.shift())
     }
@@ -61,7 +90,7 @@ export const loop: ReadsfTildeCodeGenerator = (_, { state, ins }) => `
 `
 
 // ------------------------------- messages ------------------------------ //
-export const messages: ReadsfTildeNodeImplementation['messages'] = (_, {state, globs}) => ({
+const messages: NodeImplementation<NodeArguments>['messages'] = (_, {state, globs}) => ({
     '0': `
     if (msg_getLength(${globs.m}) >= 2) {
         if (msg_isStringToken(${globs.m}, 0) 
@@ -106,5 +135,13 @@ export const messages: ReadsfTildeNodeImplementation['messages'] = (_, {state, g
 })
 
 // ------------------------------------------------------------------- //
-export const stateVariables: ReadsfTildeNodeImplementation['stateVariables'] = () => [
+const stateVariables: NodeImplementation<NodeArguments>['stateVariables'] = () => [
     'isWriting', 'operationId', 'block', 'cursor', 'flushBlock']
+
+const nodeImplementation: NodeImplementation<NodeArguments> = {declare, messages, loop, stateVariables}
+
+export { 
+    builder,
+    nodeImplementation,
+    NodeArguments,
+}

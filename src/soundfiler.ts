@@ -13,17 +13,29 @@ import {
     NodeCodeGenerator,
     NodeImplementation,
 } from '@webpd/compiler-js/src/types'
-import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
+import { NodeBuilder } from '@webpd/pd-json'
 
-type SoundfilerCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['_NO_ARGS']>
-type SoundfilerNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['_NO_ARGS']>
+interface NodeArguments {}
 
 // TODO: lots of things left to implement
 //      - channel count
 //      - simlutaneous operations
+// ------------------------------- node builder ------------------------------ //
+const builder: NodeBuilder<NodeArguments> = {
+    translateArgs: (pdNode) => ({}),
+    build: () => ({
+        inlets: {
+            '0': { type: 'message', id: '0' },
+        },
+        outlets: {
+            '0': { type: 'message', id: '0' },
+        },
+        isSignalSink: true,
+    }),
+}
 
 // ------------------------------ declare ------------------------------ //
-export const declare: SoundfilerCodeGenerator = (_, {macros, state, types, globs, outs}) => `
+const declare: NodeCodeGenerator<NodeArguments> = (_, {macros, state, types, globs, outs}) => `
     let ${macros.typedVar(state.arrayNames, 'Array<string>')} = []
 
     const ${state.funcHandleMessage0} = ${macros.typedFuncHeader([
@@ -33,14 +45,14 @@ export const declare: SoundfilerCodeGenerator = (_, {macros, state, types, globs
 `
 
 // ------------------------------- loop ------------------------------ //
-export const loop: SoundfilerCodeGenerator = (_, { state, ins }) => `
+const loop: NodeCodeGenerator<NodeArguments> = (_, { state, ins }) => `
     while (${ins.$0}.length) {
         ${state.funcHandleMessage0}(${ins.$0}.shift())
     }
 `
 
 // ------------------------------- messages ------------------------------ //
-export const messages: SoundfilerNodeImplementation['messages'] = (_, { state, macros, globs, snds }) => ({
+const messages: NodeImplementation<NodeArguments>['messages'] = (_, { state, macros, globs, snds }) => ({
     '0': `
     if (
         msg_getLength(${globs.m}) >= 3 
@@ -117,4 +129,12 @@ export const messages: SoundfilerNodeImplementation['messages'] = (_, { state, m
 })
 
 // ------------------------------------------------------------------- //
-export const stateVariables: SoundfilerNodeImplementation['stateVariables'] = () => ['arrayNames']
+const stateVariables: NodeImplementation<NodeArguments>['stateVariables'] = () => ['arrayNames']
+
+const nodeImplementation: NodeImplementation<NodeArguments> = {declare, messages, loop, stateVariables}
+
+export { 
+    builder,
+    nodeImplementation,
+    NodeArguments,
+}

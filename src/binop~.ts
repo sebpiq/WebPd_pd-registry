@@ -15,17 +15,35 @@ import {
     NodeImplementation,
     NodeImplementations,
 } from '@webpd/compiler-js/src/types'
-import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
+import { NodeBuilder, validation } from '@webpd/pd-json'
 
-type BinopTildeCodeGenerator = NodeCodeGenerator<
-    NODE_ARGUMENTS_TYPES['_BINOP_TILDE']
->
-type BinopTildeNodeImplementation = NodeImplementation<
-    NODE_ARGUMENTS_TYPES['_BINOP_TILDE']
->
+interface NodeArguments { value?: number }
+
+// ------------------------------- node builder ------------------------------ //
+const builder: NodeBuilder<NodeArguments> = {
+    translateArgs: (pdNode) => ({
+        value: validation.assertOptionalNumber(pdNode.args[0]),
+    }),
+    build: () => ({
+        inlets: {
+            '0': { type: 'signal', id: '0' },
+            '1_message': { type: 'message', id: '1_message' },
+            '1_signal': { type: 'signal', id: '1_signal' },
+        },
+        outlets: {
+            '0': { type: 'signal', id: '0' },
+        },
+    }),
+    rerouteConnectionIn: (outlet, inletId): DspGraph.PortletId => {
+        if (inletId === '1') {
+            return outlet.type === 'message' ? '1_message' : '1_signal'
+        }
+        return undefined
+    },
+}
 
 // ------------------------------ declare ------------------------------ //
-const declare: BinopTildeCodeGenerator = (node, {state, macros}) =>
+const declare: NodeCodeGenerator<NodeArguments> = (node, {state, macros}) =>
     _hasSignalInput(node)
         ? ''
         : `
@@ -33,8 +51,8 @@ const declare: BinopTildeCodeGenerator = (node, {state, macros}) =>
         `
 
 // ------------------------------ initialize ------------------------------ //
-export const makeInitialize =
-    (defaultValue: number): BinopTildeCodeGenerator =>
+const makeInitialize =
+    (defaultValue: number): NodeCodeGenerator<NodeArguments> =>
         (node, {ins, state}) => {
             const initialValue = (node.args.value || defaultValue).toString(10)
             return _hasSignalInput(node)
@@ -43,7 +61,7 @@ export const makeInitialize =
         }
 
 // ------------------------------- loop ------------------------------ //
-export const makeLoop = (operator: string): BinopTildeCodeGenerator => {
+const makeLoop = (operator: string): NodeCodeGenerator<NodeArguments> => {
     return (node, {ins, outs, state}) =>
         _hasSignalInput(node)
             ? `${outs.$0} = ${ins.$0} ${operator} ${ins.$1_signal}`
@@ -51,21 +69,22 @@ export const makeLoop = (operator: string): BinopTildeCodeGenerator => {
 }
 
 // ------------------------------- messages ------------------------------ //
-const messages: BinopTildeNodeImplementation['messages'] = (node, {state, globs}) => ({
+const messages: NodeImplementation<NodeArguments>['messages'] = (node, {state, globs}) => ({
     '1_message': !_hasSignalInput(node) ? `
         ${state.rightOp} = msg_readFloatToken(${globs.m}, 0)
     `: ''
 })
 
 // ------------------------------------------------------------------- //
-export const stateVariables: BinopTildeNodeImplementation['stateVariables'] = () => [
+const stateVariables: NodeImplementation<NodeArguments>['stateVariables'] = () => [
     'rightOp'
 ]
 
-const _hasSignalInput = (node: DspGraph.Node) =>
+const _hasSignalInput = (node: DspGraph.Node<NodeArguments>) =>
     node.sources['1_signal'] && node.sources['1_signal'].length
 
-const binopTilde: NodeImplementations = {
+
+const nodeImplementations: NodeImplementations = {
     '+~': {
         initialize: makeInitialize(0),
         declare,
@@ -82,4 +101,8 @@ const binopTilde: NodeImplementations = {
     },
 }
 
-export default binopTilde
+export { 
+    builder,
+    nodeImplementations,
+    NodeArguments,
+}

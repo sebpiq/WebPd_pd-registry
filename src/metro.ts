@@ -13,14 +13,31 @@ import {
     NodeCodeGenerator,
     NodeImplementation,
 } from '@webpd/compiler-js/src/types'
-import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
+import { NodeBuilder, validation } from '@webpd/pd-json'
 
-type MetroCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['metro']>
-type MetroNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['metro']>
+interface NodeArguments { rate: number }
 
 // TODO : more complex ways to set rate
+
+// ------------------------------- node builder ------------------------------ //
+const builder: NodeBuilder<NodeArguments> = {
+    translateArgs: (pdNode) => ({
+        rate: validation.assertOptionalNumber(pdNode.args[0]),
+    }),
+    build: () => ({
+        inlets: {
+            '0': { type: 'message', id: '0' },
+            '1': { type: 'message', id: '1' },
+        },
+        outlets: {
+            '0': { type: 'message', id: '0' },
+        },
+        isMessageSource: true
+    }),
+}
+
 // ------------------------------ declare ------------------------------ //
-export const declare: MetroCodeGenerator = (_, { state, globs, macros }) => 
+const declare: NodeCodeGenerator<NodeArguments> = (_, { state, globs, macros }) => 
     // Time units are all expressed in frames here
     `
         let ${macros.typedVar(state.rate, 'Float')} = 0
@@ -35,13 +52,13 @@ export const declare: MetroCodeGenerator = (_, { state, globs, macros }) =>
     `
 
 // ------------------------------ initialize ------------------------------ //
-export const initialize: MetroCodeGenerator = (node, {state}) => `
+const initialize: NodeCodeGenerator<NodeArguments> = (node, {state}) => `
     ${node.args.rate !== undefined ? 
         `${state.funcSetRate}(${node.args.rate})`: ''}
 `
 
 // ------------------------------ messages ------------------------------ //
-export const messages: MetroNodeImplementation['messages'] = (_, {state, globs, types}) => ({
+const messages: NodeImplementation<NodeArguments>['messages'] = (_, {state, globs, types}) => ({
     '0': `
     if (msg_getLength(${globs.m}) === 1) {
         if (
@@ -73,7 +90,7 @@ export const messages: MetroNodeImplementation['messages'] = (_, {state, globs, 
 })
 
 // ------------------------------- loop ------------------------------ //
-export const loop: MetroCodeGenerator = (_, {state, snds, types, globs}) => `
+const loop: NodeCodeGenerator<NodeArguments> = (_, {state, snds, types, globs}) => `
     if (${globs.frame} === ${state.nextTick}) {
         ${snds.$0}(msg_bang())
         ${state.realNextTick} = ${state.realNextTick} + ${state.rate}
@@ -82,7 +99,7 @@ export const loop: MetroCodeGenerator = (_, {state, snds, types, globs}) => `
 `
 
 // ------------------------------------------------------------------- //
-export const stateVariables: MetroNodeImplementation['stateVariables'] = () => [
+const stateVariables: NodeImplementation<NodeArguments>['stateVariables'] = () => [
     'rate',
     'nextTick',
     'realNextTick',
@@ -90,3 +107,11 @@ export const stateVariables: MetroNodeImplementation['stateVariables'] = () => [
     'funcHandleMessage0',
     'funcHandleMessage1',
 ]
+
+const nodeImplementation: NodeImplementation<NodeArguments> = {declare, initialize, messages, loop, stateVariables}
+
+export { 
+    builder,
+    nodeImplementation,
+    NodeArguments,
+}

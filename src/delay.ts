@@ -13,17 +13,31 @@ import {
     NodeCodeGenerator,
     NodeImplementation,
 } from '@webpd/compiler-js/src/types'
-import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
+import { NodeBuilder, validation } from '@webpd/pd-json'
 
-type DelayCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['delay']>
-type DelayNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['delay']>
+interface NodeArguments { delay: number }
 
 // TODO : more complex ways to set delay
 // TODO : tests (delay 0, several bangs at same tick) etc.
 
+// ------------------------------- node builder ------------------------------ //
+const builder: NodeBuilder<NodeArguments> = {
+    translateArgs: (pdNode) => ({
+        delay: validation.assertOptionalNumber(pdNode.args[0]),
+    }),
+    build: () => ({
+        inlets: {
+            '0': { type: 'message', id: '0' },
+            '1': { type: 'message', id: '1' },
+        },
+        outlets: {
+            '0': { type: 'message', id: '0' },
+        },
+    }),
+}
 
 // ------------------------------ declare ------------------------------ //
-export const declare: DelayCodeGenerator = (_, { state, globs, macros, types }) => 
+const declare: NodeCodeGenerator<NodeArguments> = (_, { state, globs, macros, types }) => 
     `
         let ${macros.typedVar(state.delay, 'Float')} = 0
         let ${macros.typedVar(state.scheduledBangs, 'Array<Float>')} = []
@@ -35,23 +49,23 @@ export const declare: DelayCodeGenerator = (_, { state, globs, macros, types }) 
         }
     `
 
+// ------------------------------ initialize ------------------------------ //
+const initialize: NodeCodeGenerator<NodeArguments> = (node, {state}) => `
+    ${node.args.delay !== undefined ? 
+        `${state.funcSetDelay}(${node.args.delay})`: ''}
+`
+
 // ------------------------------ messages ------------------------------ //
-export const messages: DelayNodeImplementation['messages'] = (_, {state, types, globs}) => ({
+const messages: NodeImplementation<NodeArguments>['messages'] = (_, {state, types, globs}) => ({
     '0': `
         ${state.scheduledBangs}.push(
             ${types.Int}(Math.round(${globs.frame} + ${state.delay}))
         )`
 })
 
-// ------------------------------ initialize ------------------------------ //
-export const initialize: DelayCodeGenerator = (node, {state}) => `
-    ${node.args.delay !== undefined ? 
-        `${state.funcSetDelay}(${node.args.delay})`: ''}
-`
-
 // ------------------------------- loop ------------------------------ //
 // We're careful to remove multiple bang at the same frame.
-export const loop: DelayCodeGenerator = (_, {state, snds, globs}) => `
+const loop: NodeCodeGenerator<NodeArguments> = (_, {state, snds, globs}) => `
     ${state.hasBanged} = false
     while (${state.scheduledBangs}.length && ${globs.frame} >= ${state.scheduledBangs}[0]) {
         ${state.scheduledBangs}.shift()
@@ -61,9 +75,17 @@ export const loop: DelayCodeGenerator = (_, {state, snds, globs}) => `
 `
 
 // ------------------------------------------------------------------- //
-export const stateVariables: DelayNodeImplementation['stateVariables'] = () => [
+const stateVariables: NodeImplementation<NodeArguments>['stateVariables'] = () => [
     'funcSetDelay',
     'delay',
     'scheduledBangs',
     'hasBanged'
 ]
+
+const nodeImplementation: NodeImplementation<NodeArguments> = {declare, initialize, messages, loop, stateVariables}
+
+export { 
+    builder,
+    nodeImplementation,
+    NodeArguments,
+}

@@ -13,10 +13,9 @@ import {
     NodeCodeGenerator,
     NodeImplementation,
 } from '@webpd/compiler-js/src/types'
-import NODE_ARGUMENTS_TYPES from '../node-arguments-types'
+import { NodeBuilder } from '@webpd/pd-json'
 
-type ReadsfTildeCodeGenerator = NodeCodeGenerator<NODE_ARGUMENTS_TYPES['_NO_ARGS']>
-type ReadsfTildeNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['_NO_ARGS']>
+interface NodeArguments {}
 
 // TODO: lots of things left to implement
 // TODO : multi-channe;
@@ -25,8 +24,22 @@ type ReadsfTildeNodeImplementation = NodeImplementation<NODE_ARGUMENTS_TYPES['_N
 //      - what happens when stream ended and starting again ? 
 //      - etc ...
 
+// ------------------------------- node builder ------------------------------ //
+const builder: NodeBuilder<NodeArguments> = {
+    translateArgs: (pdNode, patch) => ({}),
+    build: () => ({
+        inlets: {
+            '0': { type: 'message', id: '0' },
+        },
+        outlets: {
+            '0': { type: 'signal', id: '0' },
+            '1': { type: 'message', id: '1' },
+        },
+    }),
+}
+
 // ------------------------------ declare ------------------------------ //
-export const declare: ReadsfTildeCodeGenerator = (_, {macros, state}) => `
+const declare: NodeCodeGenerator<NodeArguments> = (_, {macros, state}) => `
     let ${macros.typedVar(state.buffer, '_fs_SoundBuffer')}
     let ${macros.typedVar(state.operationId, 'fs_OperationId')} = -1
     let ${macros.typedVar(state.isReading, 'Int')} = 0
@@ -34,7 +47,7 @@ export const declare: ReadsfTildeCodeGenerator = (_, {macros, state}) => `
 `
 
 // ------------------------------- loop ------------------------------ //
-export const loop: ReadsfTildeCodeGenerator = (_, { state, ins, outs }) => `
+const loop: NodeCodeGenerator<NodeArguments> = (_, { state, ins, outs }) => `
     while (${ins.$0}.length) {
         ${state.funcHandleMessage0}(${ins.$0}.shift())
     }
@@ -52,7 +65,7 @@ export const loop: ReadsfTildeCodeGenerator = (_, { state, ins, outs }) => `
 `
 
 // ------------------------------- messages ------------------------------ //
-export const messages: ReadsfTildeNodeImplementation['messages'] = (_, {state, globs}) => ({
+const messages: NodeImplementation<NodeArguments>['messages'] = (_, {state, globs}) => ({
     '0': `
     if (msg_getLength(${globs.m}) >= 2) {
         if (msg_isStringToken(${globs.m}, 0) 
@@ -99,5 +112,13 @@ export const messages: ReadsfTildeNodeImplementation['messages'] = (_, {state, g
 })
 
 // ------------------------------------------------------------------- //
-export const stateVariables: ReadsfTildeNodeImplementation['stateVariables'] = () => [
+const stateVariables: NodeImplementation<NodeArguments>['stateVariables'] = () => [
     'buffer', 'isReading', 'readingStage', 'operationId']
+
+const nodeImplementation: NodeImplementation<NodeArguments> = {declare, messages, loop, stateVariables}
+
+export { 
+    builder,
+    nodeImplementation,
+    NodeArguments,
+}
