@@ -30,25 +30,12 @@ const builder: NodeBuilder<NodeArguments> = {
         outlets: {
             '0': { type: 'message', id: '0' },
         },
-        isSignalSink: true,
     }),
 }
 
 // ------------------------------ declare ------------------------------ //
-const declare: NodeCodeGenerator<NodeArguments> = (_, {macros, state, types, globs, outs}) => `
+const declare: NodeCodeGenerator<NodeArguments> = (_, {macros, state}) => `
     let ${macros.typedVar(state.arrayNames, 'Array<string>')} = []
-
-    const ${state.funcHandleMessage0} = ${macros.typedFuncHeader([
-        macros.typedVar('m', 'Message')
-    ], 'void')} => {
-    }
-`
-
-// ------------------------------- loop ------------------------------ //
-const loop: NodeCodeGenerator<NodeArguments> = (_, { state, ins }) => `
-    while (${ins.$0}.length) {
-        ${state.funcHandleMessage0}(${ins.$0}.shift())
-    }
 `
 
 // ------------------------------- messages ------------------------------ //
@@ -131,7 +118,7 @@ const messages: NodeImplementation<NodeArguments>['messages'] = (_, { state, mac
 // ------------------------------------------------------------------- //
 const stateVariables: NodeImplementation<NodeArguments>['stateVariables'] = () => ['arrayNames']
 
-const nodeImplementation: NodeImplementation<NodeArguments> = {declare, messages, loop, stateVariables}
+const nodeImplementation: NodeImplementation<NodeArguments> = {declare, messages, stateVariables}
 
 export { 
     builder,

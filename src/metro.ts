@@ -73,8 +73,8 @@ const messages: NodeImplementation<NodeArguments>['messages'] = (_, {state, glob
             msg_isFloatToken(${globs.m}, 0)
             || (msg_isStringToken(${globs.m}, 0) && msg_readStringToken(${globs.m}, 0) === 'bang')
         ) {
-            ${state.nextTick} = ${globs.frame} + 1
-            ${state.realNextTick} = ${types.Float}(${globs.frame} + 1)
+            ${state.nextTick} = ${globs.frame}
+            ${state.realNextTick} = ${types.Float}(${globs.frame})
             return
         }
     }

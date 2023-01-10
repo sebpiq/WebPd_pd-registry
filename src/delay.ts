@@ -15,15 +15,20 @@ import {
 } from '@webpd/compiler-js/src/types'
 import { NodeBuilder, validation } from '@webpd/pd-json'
 
-interface NodeArguments { delay: number }
+interface NodeArguments { 
+    delay: number,
+    unitAmount: number,
+    unit: string,
+}
 
-// TODO : more complex ways to set delay
-// TODO : tests (delay 0, several bangs at same tick) etc.
-
+// TODO : abstract funcSetUnit for reusability
+// TODO : alias [del]
 // ------------------------------- node builder ------------------------------ //
 const builder: NodeBuilder<NodeArguments> = {
     translateArgs: (pdNode) => ({
-        delay: validation.assertOptionalNumber(pdNode.args[0]),
+        delay: validation.assertOptionalNumber(pdNode.args[0]) || 0,
+        unitAmount: validation.assertOptionalNumber(pdNode.args[1]) || 1,
+        unit: validation.assertOptionalString(pdNode.args[2]) || 'msec',
     }),
     build: () => ({
         inlets: {
@@ -40,46 +45,111 @@ const builder: NodeBuilder<NodeArguments> = {
 const declare: NodeCodeGenerator<NodeArguments> = (_, { state, globs, macros, types }) => 
     `
         let ${macros.typedVar(state.delay, 'Float')} = 0
-        let ${macros.typedVar(state.scheduledBangs, 'Array<Float>')} = []
+        let ${macros.typedVar(state.sampleRatio, 'Float')} = 1
+        let ${macros.typedVar(state.scheduledBang, 'Int')} = -1
 
         const ${state.funcSetDelay} = ${macros.typedFuncHeader([
             macros.typedVar('delay', 'Float')
         ], 'void')} => {
-            ${state.delay} = Math.max(0, delay / 1000 * ${globs.sampleRate})
+            ${state.delay} = Math.max(0, delay * ${state.sampleRatio})
+        }
+
+        const ${state.funcScheduleDelay} = ${macros.typedFuncHeader([
+        ], 'void')} => {
+            ${state.scheduledBang} = ${types.Int}(Math.round(
+                ${globs.frame} + ${state.delay} * ${state.sampleRatio}))
+        }
+
+        const ${state.funcStopDelay} = ${macros.typedFuncHeader([], 'void')} => {
+            ${state.scheduledBang} = -1
+        }
+
+        const ${state.funcSetUnit} = ${macros.typedFuncHeader([
+            macros.typedVar('amount', 'Float'),
+            macros.typedVar('unit', 'string'),
+        ], 'void')} => {
+            if (unit === 'msec' || unit === 'millisecond') {
+                ${state.sampleRatio} = amount / 1000 * ${globs.sampleRate}
+            } else if (unit === 'sec' || unit === 'seconds' || unit === 'second') {
+                ${state.sampleRatio} = amount * ${globs.sampleRate}
+            } else if (unit === 'min' || unit === 'minutes' || unit === 'minute') {
+                ${state.sampleRatio} = amount * 60 * ${globs.sampleRate}
+            } else if (unit === 'samp' || unit === 'samples' || unit === 'sample') {
+                ${state.sampleRatio} = amount
+            } else {
+                throw new Error("invalid time unit : " + unit)
+            }
         }
     `
 
 // ------------------------------ initialize ------------------------------ //
 const initialize: NodeCodeGenerator<NodeArguments> = (node, {state}) => `
-    ${node.args.delay !== undefined ? 
-        `${state.funcSetDelay}(${node.args.delay})`: ''}
+    ${state.funcSetUnit}(${node.args.unitAmount}, "${node.args.unit}")
+    ${state.funcSetDelay}(${node.args.delay})
 `
 
 // ------------------------------ messages ------------------------------ //
-const messages: NodeImplementation<NodeArguments>['messages'] = (_, {state, types, globs}) => ({
+const messages: NodeImplementation<NodeArguments>['messages'] = (node, {state, globs, macros}) => ({
     '0': `
-        ${state.scheduledBangs}.push(
-            ${types.Int}(Math.round(${globs.frame} + ${state.delay}))
-        )`
+        if (msg_getLength(${globs.m}) === 1) {
+            if (msg_isStringToken(${globs.m}, 0)) {
+                const ${macros.typedVar('action', 'string')} = msg_readStringToken(${globs.m}, 0)
+                if (action === 'bang' || action === 'start') {
+                    ${state.funcScheduleDelay}()
+                    return
+                } else if (action === 'stop') {
+                    ${state.funcStopDelay}()
+                    return
+                }
+                
+            } else if (msg_isFloatToken(${globs.m}, 0)) {
+                ${state.funcSetDelay}(msg_readFloatToken(${globs.m}, 0))
+                ${state.funcScheduleDelay}()
+                return 
+            }
+        
+        } else if (
+            msg_isMatching(${globs.m}, [MSG_STRING_TOKEN, MSG_FLOAT_TOKEN, MSG_STRING_TOKEN])
+            && msg_readStringToken(${globs.m}, 0) === 'tempo'
+        ) {
+            ${state.funcSetUnit}(
+                msg_readFloatToken(${globs.m}, 1), 
+                msg_readStringToken(${globs.m}, 2)
+            )
+            return
+        }
+        throw new Error("${node.type} <${node.id}> inlet <0_message> invalid message received.")
+    `,
+    '1': `
+        if (msg_isMatching(${globs.m}, [MSG_FLOAT_TOKEN])) {
+            ${state.funcSetDelay}(msg_readFloatToken(${globs.m}, 0))
+            return
+        }
+        throw new Error("${node.type} <${node.id}> inlet <1_message> invalid message received.")
+    `
 })
 
 // ------------------------------- loop ------------------------------ //
 // We're careful to remove multiple bang at the same frame.
 const loop: NodeCodeGenerator<NodeArguments> = (_, {state, snds, globs}) => `
-    ${state.hasBanged} = false
-    while (${state.scheduledBangs}.length && ${globs.frame} >= ${state.scheduledBangs}[0]) {
-        ${state.scheduledBangs}.shift()
-        if (!${state.hasBanged}) {${snds.$0}.push(msg_bang())}
-        ${state.hasBanged} = true
+    if (
+        ${state.scheduledBang} > -1 
+        && ${state.scheduledBang} <= ${globs.frame}
+    ) {
+        ${snds.$0}(msg_bang())
+        ${state.scheduledBang} = -1
     }
 `
 
 // ------------------------------------------------------------------- //
 const stateVariables: NodeImplementation<NodeArguments>['stateVariables'] = () => [
     'funcSetDelay',
+    'funcScheduleDelay',
+    'funcStopDelay',
+    'funcSetUnit',
     'delay',
-    'scheduledBangs',
-    'hasBanged'
+    'scheduledBang',
+    'sampleRatio',
 ]
 
 const nodeImplementation: NodeImplementation<NodeArguments> = {declare, initialize, messages, loop, stateVariables}

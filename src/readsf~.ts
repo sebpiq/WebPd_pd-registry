@@ -47,18 +47,14 @@ const declare: NodeCodeGenerator<NodeArguments> = (_, {macros, state}) => `
 `
 
 // ------------------------------- loop ------------------------------ //
-const loop: NodeCodeGenerator<NodeArguments> = (_, { state, ins, outs }) => `
-    while (${ins.$0}.length) {
-        ${state.funcHandleMessage0}(${ins.$0}.shift())
-    }
-
+const loop: NodeCodeGenerator<NodeArguments> = (_, { state, snds, outs }) => `
     if (${state.isReading} === 1) {
         ${outs.$0} = ${state.buffer}.pullFrame()[0]
     } else if (${state.isReading} === 2) {
         ${outs.$0} = ${state.buffer}.pullFrame()[0]
         if (${state.buffer}.availableFrameCount() === 0) {
             console.log('[readsf~] BANG')
-            ${outs.$1}.push(msg_bang())
+            ${snds.$1}(msg_bang())
             ${state.isReading} = 0
         }
     }
