@@ -16,10 +16,9 @@ import { nodeImplementation, builder } from './loadbang'
 
 describe('loadbang', () => {
     describe('implementation', () => {
-
         it.each<{ target: CompilerTarget }>([
-            {target: 'javascript'},
-            {target: 'assemblyscript'},
+            { target: 'javascript' },
+            { target: 'assemblyscript' },
         ])('should output a bang on creation %s', async ({ target }) => {
             await nodeImplementationsTestHelpers.assertNodeOutput(
                 {
@@ -27,10 +26,10 @@ describe('loadbang', () => {
                     node: buildNode(builder, 'loadbang', {}),
                     nodeImplementation,
                 },
-                [{}, {}, {}],
-                [{ '0': [['bang']] }, { '0': [] }, { '0': [] }]
+                [{ ins: {} }, { outs: { '0': [['bang']] } }],
+                [{ ins: {} }, { outs: { '0': [] } }],
+                [{ ins: {} }, { outs: { '0': [] } }]
             )
         })
-
     })
 })

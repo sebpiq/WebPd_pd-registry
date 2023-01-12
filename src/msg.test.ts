@@ -29,15 +29,15 @@ describe('msg', () => {
                     }),
                     nodeImplementation,
                 },
-                [{ '0': [['bang'], ['blabla'], ['quoi?', 456]] }],
                 [
-                    {
+                    {ins: { '0': [['bang'], ['blabla'], ['quoi?', 456]] }},
+                    {outs: {
                         '0': [
                             [123, 'hello'],
                             [123, 'hello'],
                             [123, 'hello'],
                         ],
-                    },
+                    }},
                 ]
             )
         })
@@ -55,20 +55,18 @@ describe('msg', () => {
                     nodeImplementation,
                 },
                 [
-                    {
+                    {ins: {
                         '0': [
                             ['wow', 'hehe', 'hoho'],
                             ['blabla', 456],
                         ],
-                    },
-                ],
-                [
-                    {
+                    }},
+                    {outs: {
                         '0': [
                             [123, 'hehe', 'wow'],
                             [123, 456, 'blabla'],
                         ],
-                    },
+                    }},
                 ]
             )
         })
@@ -86,20 +84,18 @@ describe('msg', () => {
                     nodeImplementation,
                 },
                 [
-                    {
+                    {ins: {
                         '0': [
                             ['earth', 'saturn'],
                             ['satan', 666],
                         ],
-                    },
-                ],
-                [
-                    {
+                    }},
+                    {outs: {
                         '0': [
                             ['hello_saturn', 'earth', 'greetings'],
                             ['hello_666', 'satan', 'greetings'],
                         ],
-                    },
+                    }},
                 ]
             )
         })

@@ -15,17 +15,19 @@ import {
 } from '@webpd/compiler-js/src/types'
 import { DspGraph } from '@webpd/dsp-graph'
 import { NodeBuilder, validation } from '@webpd/pd-json'
+import { GLOBS_parseReadWriteFsOpts, GLOB_parseSoundFileOpenOpts } from './global'
+import { nLines } from './utils'
 
 const BLOCK_SIZE = 44100 * 5
 
 interface NodeArguments { channelCount: number }
 
 // TODO: lots of things left to implement
-// TODO : multi-channel
 // TODO : check the real state machine of writesf
 //      - what happens when start / stopping / start stream ? 
 //      - what happens when stream ended and starting again ? 
 //      - etc ...
+// TODO : unittest GLOB_parseSoundFileOpenOpts and move outside of here
 
 // ------------------------------- node builder ------------------------------ //
 // TODO : test
@@ -35,11 +37,10 @@ const builder: NodeBuilder<NodeArguments> = {
     }),
     build: ({ channelCount }) => {
         const inlets: DspGraph.PortletMap = {
-            '0_message': { type: 'message', id: '0_message' },
-            '0_signal': { type: 'signal', id: '0_signal' },
+            '0_message': { type: 'message', id: '0_message' }
         }
-        for (let channel = 1; channel < channelCount; channel++) {
-            inlets[`${channel}`] = { type: 'signal', id: `${channel}` }
+        for (let i = 0; i < channelCount; i++) {
+            inlets[`${i}`] = { type: 'signal', id: `${i}` }
         }
 
         return {
@@ -57,56 +58,77 @@ const builder: NodeBuilder<NodeArguments> = {
 }
 
 // ------------------------------ declare ------------------------------ //
-const declare: NodeCodeGenerator<NodeArguments> = (_, {macros, state}) => `
+const declare: NodeCodeGenerator<NodeArguments> = ({args}, {macros, state, globs}) => `
     let ${macros.typedVar(state.operationId, 'fs_OperationId')} = -1
     let ${macros.typedVar(state.isWriting, 'boolean')} = false
-    const ${macros.typedVar(state.block, 'FloarArray[]')} = [
-        tarray_create(${BLOCK_SIZE}),
-        tarray_create(${BLOCK_SIZE}),
+    const ${macros.typedVar(state.block, 'Array<FloatArray>')} = [
+        ${nLines(args.channelCount, () => 
+            `tarray_create(${BLOCK_SIZE}),`)}
     ]
-    let cursor = ${macros.typedVar(state.cursor, 'Int')} = 0
+    let ${macros.typedVar(state.cursor, 'Int')} = 0
 
-    const ${state.flushBlock} = () => {
-        fs_sendSoundStreamData(${state.operationId}, ${state.block})
+    const ${state.flushBlock} = ${macros.typedFuncHeader([
+    ], 'void')} => {
+        const ${macros.typedVar('block', 'Array<FloatArray>')} = []
+        for (let ${macros.typedVar('i', 'Int')} = 0; i < ${state.block}.length; i++) {
+            block.push(${state.block}[i].subarray(0, ${state.cursor}))
+        }
+        fs_sendSoundStreamData(${state.operationId}, block)
         ${state.cursor} = 0
     }
+
+    const ${state.GLOB_parseSoundFileOpenOpts} = ${GLOB_parseSoundFileOpenOpts(macros)}
+    const ${state.GLOBS_parseReadWriteFsOpts} = ${GLOBS_parseReadWriteFsOpts(state, globs, macros)}
 `
 
 // ------------------------------- loop ------------------------------ //
-const loop: NodeCodeGenerator<NodeArguments> = (_, { state, ins }) => `
-    while (${ins.$0_message}.length) {
-        ${state.funcHandleMessage0}(${ins.$0_message}.shift())
-    }
-
+const loop: NodeCodeGenerator<NodeArguments> = ({ args }, { state, ins }) => `
     if (${state.isWriting} === true) {
-        ${state.block}[0][${state.cursor}] = ${ins.$0_signal}
-        ${state.block}[1][${state.cursor}] = ${ins.$1}
+        ${nLines(args.channelCount, (i) => 
+            `${state.block}[${i}][${state.cursor}] = ${ins[i]}`)}
         ${state.cursor}++
         if (${state.cursor} === ${BLOCK_SIZE}) {
-            console.log('[writesf~] send data')
             ${state.flushBlock}()
         }
     }
 `
 
 // ------------------------------- messages ------------------------------ //
-const messages: NodeImplementation<NodeArguments>['messages'] = (_, {state, globs}) => ({
-    '0': `
+const messages: NodeImplementation<NodeArguments>['messages'] = (node, { state, globs, macros }) => ({
+    '0_message': `
     if (msg_getLength(${globs.m}) >= 2) {
-        if (msg_isStringToken(${globs.m}, 0) 
-            && msg_isStringToken(${globs.m}, 1) 
+        if (
+            msg_isStringToken(${globs.m}, 0) 
             && msg_readStringToken(${globs.m}, 0) === 'open'
         ) {
-            console.log('[writesf~] stream open')
             if (${state.operationId} !== -1) {
                 fs_closeSoundStream(${state.operationId}, FS_OPERATION_SUCCESS)
             }
 
+            const ${macros.typedVar('soundInfo', '_fs_SoundInfo')} = {
+                channelCount: ${node.args.channelCount},
+                sampleRate: ${globs.sampleRate},
+                bitDepth: 32,
+                encodingFormat: '',
+                endianness: '',
+                extraOptions: '',
+            }
+            const ${macros.typedVar('unhandledOptions', 'Set<Int>')} = ${state.GLOB_parseSoundFileOpenOpts}(
+                ${globs.m},
+                soundInfo,
+            )
+            const ${macros.typedVar('url', 'string')} = ${state.GLOBS_parseReadWriteFsOpts}(
+                ${globs.m},
+                soundInfo,
+                unhandledOptions
+            )
+            if (url.length === 0) {
+                return
+            }
             ${state.operationId} = fs_openSoundWriteStream(
-                msg_readStringToken(${globs.m}, 1),
-                fs_soundInfo(2),
+                url,
+                soundInfo,
                 () => {
-                    console.log('[writesf~] stream ended')
                     ${state.flushBlock}()
                     ${state.operationId} = -1
                 }
@@ -114,29 +136,32 @@ const messages: NodeImplementation<NodeArguments>['messages'] = (_, {state, glob
             return
         }
 
-    } else if (
-        msg_getLength(${globs.m}) === 1
-        && msg_isStringToken(${globs.m}, 0)
-    ) {
-        if (msg_readStringToken(${globs.m}, 0) === 'start') {
-            console.log('[writesf~] writing = true')
+    } else if (msg_isMatching(${globs.m}, [MSG_STRING_TOKEN])) {
+        const ${macros.typedVar('action', 'string')} = msg_readStringToken(${globs.m}, 0)
+
+        if (action === 'start') {
             ${state.isWriting} = true
             return
-        } else if (msg_readStringToken(${globs.m}, 0) === 'stop') {
-            console.log('[writesf~] writing = false')
+
+        } else if (action === 'stop') {
             ${state.flushBlock}()
             ${state.isWriting} = false
+            return
+
+        } else if (action === 'print') {
+            console.log('[writesf~] writing = ' + ${state.isWriting}.toString())
             return
         }
     }
     
-    throw new Error("Unexpected message")
+    throw new Error("${node.type} <${node.id}> inlet <0> invalid message received.")
     `
 })
 
 // ------------------------------------------------------------------- //
 const stateVariables: NodeImplementation<NodeArguments>['stateVariables'] = () => [
-    'isWriting', 'operationId', 'block', 'cursor', 'flushBlock']
+    'isWriting', 'operationId', 'block', 'cursor', 'flushBlock', 
+    'GLOB_parseSoundFileOpenOpts', 'GLOBS_parseReadWriteFsOpts']
 
 const nodeImplementation: NodeImplementation<NodeArguments> = {declare, messages, loop, stateVariables}
 

@@ -19,9 +19,9 @@ describe('noise~', () => {
 
     describe('implementation', () => {
         const testOutputFrames = (
-            frames: Array<nodeImplementationsTestHelpers.Frame>
+            frames: Array<nodeImplementationsTestHelpers.FrameOut>
         ) => {
-            const values = new Set(frames.map((frame) => frame['0']))
+            const values = new Set(frames.map((frame) => frame.outs['0']))
             values.forEach((value) => {
                 assert.ok(-1 < value && value < 1)
             })

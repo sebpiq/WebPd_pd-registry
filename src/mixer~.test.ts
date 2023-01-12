@@ -15,7 +15,6 @@ import { nodeImplementation, builder } from './mixer~'
 import { buildNode, testNodeBuild } from './test-helpers'
 
 describe('mixer~', () => {
-
     describe('builer', () => {
         describe('build', () => {
             it('should create inlets for channelCount', () => {
@@ -38,8 +37,8 @@ describe('mixer~', () => {
 
     describe('implementation', () => {
         it.each<{ target: CompilerTarget }>([
-            {target: 'javascript'},
-            {target: 'assemblyscript'},
+            { target: 'javascript' },
+            { target: 'assemblyscript' },
         ])('should sum incoming signals together %s', async ({ target }) => {
             await nodeImplementationsTestHelpers.assertNodeOutput(
                 {
@@ -50,11 +49,17 @@ describe('mixer~', () => {
                     nodeImplementation,
                 },
                 [
-                    { '0': 10, '1': 1, '2': 0.1 },
-                    { '0': 20, '1': 2, '2': 0.2 },
-                    { '0': 30, '1': 3, '2': 0.3 },
+                    { ins: { '0': 10, '1': 1, '2': 0.1 } },
+                    { outs: { '0': 11.1 } },
                 ],
-                [{ '0': 11.1 }, { '0': 22.2 }, { '0': 33.3 }]
+                [
+                    { ins: { '0': 20, '1': 2, '2': 0.2 } },
+                    { outs: { '0': 22.2 } },
+                ],
+                [
+                    { ins: { '0': 30, '1': 3, '2': 0.3 } },
+                    { outs: { '0': 33.3 } },
+                ]
             )
         })
     })

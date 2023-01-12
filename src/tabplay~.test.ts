@@ -15,12 +15,10 @@ import { nodeImplementation, builder } from './tabplay~'
 import { buildNode } from './test-helpers'
 
 describe('tabplay~', () => {
-
     describe('implementation', () => {
-
         it.each<{ target: CompilerTarget }>([
-            {target: 'javascript'},
-            {target: 'assemblyscript'},
+            { target: 'javascript' },
+            { target: 'assemblyscript' },
         ])('should change array when sent set %s', async ({ target }) => {
             await nodeImplementationsTestHelpers.assertNodeOutput(
                 {
@@ -29,132 +27,102 @@ describe('tabplay~', () => {
                         arrayName: 'UNKNOWN_ARRAY',
                     }),
                     nodeImplementation,
-                },
-                [
-                    {}, // frame 1
-                    {}, // frame 2
-                    {
-                        // frame 3
-    
-                        '0': [['set', 'myArray'], ['bang']],
+                    arrays: {
+                        myArray: [1, 2, 3],
                     },
-                    {}, // frame 4
-                ],
+                },
+                [{ ins: {} }, { outs: { '0': 0, '1': [] } }],
+                [{ ins: {} }, { outs: { '0': 0, '1': [] } }],
                 [
-                    { '0': 0, '1': [] },
-                    { '0': 0, '1': [] },
-                    { '0': 1, '1': [] },
-                    { '0': 2, '1': [] },
+                    { ins: { '0': [['set', 'myArray'], ['bang']] } },
+                    { outs: { '0': 1, '1': [] } },
                 ],
-                {
-                    myArray: [1, 2, 3],
-                }
+                [{ ins: {} }, { outs: { '0': 2, '1': [] } }]
             )
         })
-    
+
         it.each<{ target: CompilerTarget }>([
-            {target: 'javascript'},
-            {target: 'assemblyscript'},
-        ])('should read from beginning to end when receiving bang %s', async ({ target }) => {
-            await nodeImplementationsTestHelpers.assertNodeOutput(
-                {
-                    target,
-                    node: buildNode(builder, 'tabplay~', {
-                        arrayName: 'myArray',
-                    }),
-                    nodeImplementation,
-                },
-                [
-                    {}, // frame 1
+            { target: 'javascript' },
+            { target: 'assemblyscript' },
+        ])(
+            'should read from beginning to end when receiving bang %s',
+            async ({ target }) => {
+                await nodeImplementationsTestHelpers.assertNodeOutput(
                     {
-                        // frame 2
-                        '0': [['bang']],
+                        target,
+                        node: buildNode(builder, 'tabplay~', {
+                            arrayName: 'myArray',
+                        }),
+                        nodeImplementation,
+                        arrays: {
+                            myArray: [11, 22, 33],
+                        },
                     },
-                    {}, // frame 3
-                    {}, // frame 4
-                    {}, // frame 5
-                ],
-                [
-                    { '0': 0, '1': [] },
-                    { '0': 11, '1': [] },
-                    { '0': 22, '1': [] },
-                    { '0': 33, '1': [['bang']] },
-                    { '0': 0, '1': [] },
-                ],
-                {
-                    myArray: [11, 22, 33],
-                }
-            )
-        })
-    
+                    [{ ins: {} }, { outs: { '0': 0, '1': [] } }],
+                    [
+                        { ins: { '0': [['bang']] } },
+                        { outs: { '0': 11, '1': [] } },
+                    ],
+                    [{ ins: {} }, { outs: { '0': 22, '1': [] } }],
+                    [{ ins: {} }, { outs: { '0': 33, '1': [['bang']] } }],
+                    [{ ins: {} }, { outs: { '0': 0, '1': [] } }]
+                )
+            }
+        )
+
         it.each<{ target: CompilerTarget }>([
-            {target: 'javascript'},
-            {target: 'assemblyscript'},
-        ])('should read from sample when receiving float %s', async ({ target }) => {
-            await nodeImplementationsTestHelpers.assertNodeOutput(
-                {
-                    target,
-                    node: buildNode(builder, 'tabplay~', {
-                        arrayName: 'myArray',
-                    }),
-                    nodeImplementation,
-                },
-                [
-                    {}, // frame 1
+            { target: 'javascript' },
+            { target: 'assemblyscript' },
+        ])(
+            'should read from sample when receiving float %s',
+            async ({ target }) => {
+                await nodeImplementationsTestHelpers.assertNodeOutput(
                     {
-                        // frame 2
-                        '0': [[3]],
+                        target,
+                        node: buildNode(builder, 'tabplay~', {
+                            arrayName: 'myArray',
+                        }),
+                        nodeImplementation,
+                        arrays: {
+                            myArray: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
+                        },
                     },
-                    {}, // frame 3
-                    {}, // frame 4
-                    {}, // frame 5
-                    {}, // frame 6
-                ],
-                [
-                    { '0': 0, '1': [] },
-                    { '0': 0.4, '1': [] },
-                    { '0': 0.5, '1': [] },
-                    { '0': 0.6, '1': [] },
-                    { '0': 0.7, '1': [['bang']] },
-                    { '0': 0, '1': [] },
-                ],
-                {
-                    myArray: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
-                }
-            )
-        })
-    
+                    [{ ins: {} }, { outs: { '0': 0, '1': [] } }],
+                    [{ ins: { '0': [[3]] } }, { outs: { '0': 0.4, '1': [] } }],
+                    [{ ins: {} }, { outs: { '0': 0.5, '1': [] } }],
+                    [{ ins: {} }, { outs: { '0': 0.6, '1': [] } }],
+                    [{ ins: {} }, { outs: { '0': 0.7, '1': [['bang']] } }],
+                    [{ ins: {} }, { outs: { '0': 0, '1': [] } }]
+                )
+            }
+        )
+
         it.each<{ target: CompilerTarget }>([
-            {target: 'javascript'},
-            {target: 'assemblyscript'},
-        ])('should read from sample to sample when receiving 2 floats %s', async ({ target }) => {
-            await nodeImplementationsTestHelpers.assertNodeOutput(
-                {
-                    target,
-                    node: buildNode(builder, 'tabplay~', {
-                        arrayName: 'myArray',
-                    }),
-                    nodeImplementation,
-                },
-                [
-                    {}, // frame 1
+            { target: 'javascript' },
+            { target: 'assemblyscript' },
+        ])(
+            'should read from sample to sample when receiving 2 floats %s',
+            async ({ target }) => {
+                await nodeImplementationsTestHelpers.assertNodeOutput(
                     {
-                        // frame 2
-                        '0': [[3, 2]],
+                        target,
+                        node: buildNode(builder, 'tabplay~', {
+                            arrayName: 'myArray',
+                        }),
+                        nodeImplementation,
+                        arrays: {
+                            myArray: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
+                        },
                     },
-                    {}, // frame 3
-                    {}, // frame 4
-                ],
-                [
-                    { '0': 0, '1': [] },
-                    { '0': 0.4, '1': [] },
-                    { '0': 0.5, '1': [['bang']] },
-                    { '0': 0, '1': [] },
-                ],
-                {
-                    myArray: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7],
-                }
-            )
-        })    
+                    [{ ins: {} }, { outs: { '0': 0, '1': [] } }],
+                    [
+                        { ins: { '0': [[3, 2]] } },
+                        { outs: { '0': 0.4, '1': [] } },
+                    ],
+                    [{ ins: {} }, { outs: { '0': 0.5, '1': [['bang']] } }],
+                    [{ ins: {} }, { outs: { '0': 0, '1': [] } }]
+                )
+            }
+        )
     })
 })
